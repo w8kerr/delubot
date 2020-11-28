@@ -75,7 +75,10 @@ func (m *Mux) Help(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 
 	resp += "```\n"
 
-	ds.ChannelMessageSend(dm.ChannelID, resp)
+	_, err := ds.ChannelMessageSend(dm.ChannelID, resp)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	return
 }
