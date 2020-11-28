@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 var GOOGLE_CLIENT_ID string
 var GOOGLE_SECRET string
 
-func Init() {
+func Init(session *discordgo.Session) {
 	GOOGLE_CLIENT_ID = os.Getenv("GOOGLE_CLIENT_ID")
 	GOOGLE_SECRET = os.Getenv("GOOGLE_SECRET")
 }

@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
@@ -58,6 +59,12 @@ func main() {
 	if Session.Token == "" {
 		log.Println("You must provide a Discord authentication token.")
 		return
+	}
+
+	if !strings.HasPrefix(Session.Token, "Bot ") {
+		Session.Token = "Bot " + Session.Token
+		fmt.Println("NEW TOKEN")
+		fmt.Println(Session.Token)
 	}
 
 	// Init mongo

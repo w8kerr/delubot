@@ -45,7 +45,7 @@ type Mux struct {
 // New returns a new Discord message route mux
 func New() *Mux {
 	m := &Mux{}
-	m.Prefix = "-dg "
+	m.Prefix = "-db "
 	return m
 }
 
@@ -108,6 +108,11 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 
 	// Ignore all messages created by the Bot account itself
 	if mc.Author.ID == ds.State.User.ID {
+		return
+	}
+
+	// Ignore all messages by non-moderators
+	if !IsModerator(ds, mc) {
 		return
 	}
 
