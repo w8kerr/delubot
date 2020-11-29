@@ -26,6 +26,7 @@ func init() {
 	Router.Route("whalerole", "Display or set the configured Whale role ('clear' to clear).", Router.WhaleRole)
 	Router.Route("syncsheet", "Display or set the configured Sync Sheet ID ('clear' to clear).", Router.SyncSheet)
 	Router.Route("sync", "Check, enable ('enable'), or disable ('disable') role syncing.", Router.Sync)
+	Router.Route("testsync", "Test what would happen if role syncing was turned on.", Router.TestSync)
 	Router.Route("config", "Display all saved configuration objects", Router.Config)
 	Router.Route("refreshconfig", "Refresh config from the database", Router.RefreshConfig)
 	Router.Route("testmsg", "Print a long test message", Router.TestMsg)

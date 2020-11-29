@@ -17,7 +17,7 @@ import (
 
 	"github.com/w8kerr/delubot/config"
 	"github.com/w8kerr/delubot/mongo"
-	"github.com/w8kerr/delubot/sheets"
+	"github.com/w8kerr/delubot/sheetsync"
 )
 
 // Version is a constant that stores the Disgord version information.
@@ -70,7 +70,7 @@ func main() {
 
 	// Init mongo
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	err = mongo.Init(false)
+	err = mongo.Init(true)
 	if err != nil {
 		panic("Failed to connect to database")
 	}
@@ -84,8 +84,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	sheets.Init(Session)
-	go sheets.Sweeper()
+	sheetsync.Init(Session)
+	go sheetsync.Sweeper()
 
 	// Run the command muxer
 	// Session.AddHandler(Router.OnMessageCreate)

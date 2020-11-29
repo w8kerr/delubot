@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/w8kerr/delubot/utils"
 )
 
 func (m *Mux) CountMembers(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
@@ -21,7 +22,7 @@ func (m *Mux) CountMembers(ds *discordgo.Session, dm *discordgo.Message, ctx *Co
 	// 	return
 	// }
 
-	members, err := GetAllMembers(ds, dm.GuildID)
+	members, err := utils.GetAllMembers(ds, dm.GuildID)
 	if err != nil {
 		respond("Error: " + err.Error())
 		return

@@ -6,7 +6,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/w8kerr/delubot/config"
-	"github.com/w8kerr/delubot/sheets"
+	"github.com/w8kerr/delubot/sheetsync"
 )
 
 func (m *Mux) SyncSheet(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
@@ -24,7 +24,7 @@ func (m *Mux) SyncSheet(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 		respond("Sync Sheet URL cleared")
 		return
 	} else if ctx.Content != "" {
-		if !sheets.HasAccess(ctx.Content) {
+		if !sheetsync.HasAccess(ctx.Content) {
 			resp := fmt.Sprintf("Could not access the sheet ID `%s`\n", ctx.Content)
 			resp += "Make sure the sheet is shared with the user `server@delutayaclub.iam.gserviceaccount.com`"
 			respond(resp)
@@ -68,7 +68,7 @@ func (m *Mux) Sync(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 			respond("Can't enable role sync, no sync Sheet is defined")
 			return
 		}
-		canAccess := sheets.HasAccess(sheetID)
+		canAccess := sheetsync.HasAccess(sheetID)
 		if !canAccess {
 			respond(fmt.Sprintf("Can't enable role sync, the current sync Sheet `%s` could not be accessed", sheetID))
 			return
