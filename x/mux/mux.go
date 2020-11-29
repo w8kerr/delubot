@@ -112,6 +112,8 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 	}
 
 	// Ignore all messages by non-moderators
+	fmt.Println("CHECK MODERATOR", IsModerator(ds, mc))
+	fmt.Println(mc.Author.Username, ":", mc.Content)
 	if !IsModerator(ds, mc) {
 		return
 	}
@@ -186,6 +188,7 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 	}
 
 	// Try to find the "best match" command out of the message.
+	fmt.Println("Received command:", ctx.Content)
 	r, fl := m.FuzzyMatch(ctx.Content)
 	if r != nil {
 		ctx.Fields = fl

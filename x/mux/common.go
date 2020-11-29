@@ -34,6 +34,28 @@ func IsModerator(ds *discordgo.Session, dm *discordgo.MessageCreate) bool {
 	return false
 }
 
+func GetResponder(ds *discordgo.Session, dm *discordgo.Message) func(msg string) {
+	return func(msg string) {
+		msgParts := []string{}
+
+		runes := []rune(msg)
+
+		for len(runes) > 2000 {
+			msgParts = append(msgParts, string(runes[0:2000]))
+			runes = runes[2000:]
+		}
+		msgParts = append(msgParts, string(runes))
+
+		for i, part := range msgParts {
+			_, err := ds.ChannelMessageSend(dm.ChannelID, part)
+			if err != nil {
+				fmt.Println(i, len(part), err)
+				fmt.Println(part)
+			}
+		}
+	}
+}
+
 func GetAllMembers(ds *discordgo.Session, guildID string) ([]*discordgo.Member, error) {
 	limit := 1000
 	after := ""

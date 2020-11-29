@@ -15,6 +15,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
+	"github.com/w8kerr/delubot/config"
 	"github.com/w8kerr/delubot/mongo"
 	"github.com/w8kerr/delubot/sheets"
 )
@@ -74,6 +75,8 @@ func main() {
 		panic("Failed to connect to database")
 	}
 
+	config.LoadConfig()
+
 	// Open a websocket connection to Discord
 	err = Session.Open()
 	if err != nil {
@@ -81,7 +84,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	sheets.Init()
+	sheets.Init(Session)
 	go sheets.Sweeper()
 
 	// Run the command muxer

@@ -1,4 +1,0 @@
-# github.com/w8kerr/delubot
-./main.go:84:13: not enough arguments in call to sheets.Init
-	have ()
-	want (*discordgo.Session)

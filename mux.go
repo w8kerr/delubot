@@ -22,8 +22,13 @@ func init() {
 	// Register the build-in help command.
 	Router.Route("help", "Display this message.", Router.Help)
 	Router.Route("countmembers", "Count the members on the server.", Router.CountMembers)
-	Router.Route("alpharole", "Display the configured Alpha role.", Router.AlphaRole)
-	Router.Route("whalerole", "Display the configured Whale role.", Router.WhaleRole)
+	Router.Route("alpharole", "Display or set the configured Alpha role ('clear' to clear).", Router.AlphaRole)
+	Router.Route("whalerole", "Display or set the configured Whale role ('clear' to clear).", Router.WhaleRole)
+	Router.Route("syncsheet", "Display or set the configured Sync Sheet ID ('clear' to clear).", Router.SyncSheet)
+	Router.Route("sync", "Check, enable ('enable'), or disable ('disable') role syncing.", Router.Sync)
+	Router.Route("config", "Display all saved configuration objects", Router.Config)
+	Router.Route("refreshconfig", "Refresh config from the database", Router.RefreshConfig)
+	Router.Route("testmsg", "Print a long test message", Router.TestMsg)
 
 	fmt.Println("MUX INIT", Router.Prefix)
 }

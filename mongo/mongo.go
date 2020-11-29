@@ -22,6 +22,10 @@ func Init(quiet bool) error {
 	MONGO_CONNECTION = os.Getenv("MONGO_CONNECTION")
 	DB_NAME = os.Getenv("DB_NAME")
 
+	if DB_NAME == "" {
+		DB_NAME = "deluclub-dev"
+	}
+
 	mgo.SetDebug(false)
 	if !quiet {
 		mgo.SetLogger(log.New(os.Stderr, "MONGO:", 1))
