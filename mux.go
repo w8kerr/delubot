@@ -29,7 +29,8 @@ func init() {
 	Router.Route("testsync", "Test what would happen if role syncing was turned on.", Router.TestSync)
 	Router.Route("config", "Display all saved configuration objects", Router.Config)
 	Router.Route("refreshconfig", "Refresh config from the database", Router.RefreshConfig)
-	Router.Route("testmsg", "Print a long test message", Router.TestMsg)
+	Router.Route("refreshconfig", "Refresh config from the database", Router.RefreshConfig)
+	Router.Route("v", "Close a modmail and copy the verification to the role sync spreadsheet", Router.Verify)
 
 	fmt.Println("MUX INIT", Router.Prefix)
 }

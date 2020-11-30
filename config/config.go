@@ -10,6 +10,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/w8kerr/delubot/models"
@@ -45,6 +46,14 @@ var GrantRoles = map[string]RoleConfig{
 var SyncSheets = map[string]string{}
 
 var SyncEnabled = map[string]bool{}
+
+var ModmailCategories = map[string]string{
+	"755437328515989564": "779849308525690900",
+}
+
+var LogChannels = map[string]string{
+	"755437328515989564": "772322798546321428",
+}
 
 var TimeFormat string
 
@@ -169,6 +178,43 @@ func WhaleRole(guildID string) string {
 	}
 
 	return guildRoles.Whale
+}
+
+// ModmailCategory get the designated modmail category ID for the given guild
+func ModmailCategory(guildID string) string {
+	catID, ok := ModmailCategories[guildID]
+	if !ok {
+		log.Printf("Could not find modmail category, %s", guildID)
+		return ""
+	}
+
+	return catID
+}
+
+func IsModmailChannel(ds *discordgo.Session, guildID, channelID string) bool {
+	catID, ok := ModmailCategories[guildID]
+	if !ok {
+		log.Printf("Could not find modmail category, %s", guildID)
+		return false
+	}
+
+	ch, err := ds.Channel(channelID)
+	if err != nil {
+		log.Printf("Failed to get channel info, %s", err)
+		return false
+	}
+	return ch.ParentID == catID
+}
+
+// LogChannel get the designated log channel for the given guild
+func LogChannel(guildID string) string {
+	chanID, ok := LogChannels[guildID]
+	if !ok {
+		log.Printf("Could not find modmail category, %s", guildID)
+		return ""
+	}
+
+	return chanID
 }
 
 func SetAlphaRole(guildID, roleID string) error {

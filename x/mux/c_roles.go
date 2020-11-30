@@ -42,12 +42,32 @@ func (m *Mux) SyncSheet(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 	}
 
 	syncSheet := config.SyncSheet(dm.GuildID)
-	if syncSheet != "" {
-		respond(fmt.Sprintf("Sync Sheet: `%s`", syncSheet))
+	if syncSheet == "" {
+		respond("No sync Sheet is configured")
 		return
 	}
 
-	respond("No sync Sheet is configured")
+	svc, err := sheetsync.GetService()
+	if err != nil {
+		respond("Couldn't create Sheet service, " + err.Error())
+		return
+	}
+
+	sheet, grantTime, removeTime, endTime, err := sheetsync.DoGetCurrentPage(svc, syncSheet)
+	if err != nil {
+		resp := fmt.Sprintf("Could not access the sheet ID `%s`\n", ctx.Content)
+		resp += "Error: `" + err.Error() + "`"
+		respond(resp)
+		return
+	}
+
+	resp := fmt.Sprintf("```Sync from Google Sheet: %s", syncSheet)
+	resp += fmt.Sprintf("\nCurrent month's page:   %s", sheet.Properties.Title)
+	resp += fmt.Sprintf("\nStart granting roles:   %s", config.PrintTime(grantTime))
+	resp += fmt.Sprintf("\nStart removing roles:   %s", config.PrintTime(removeTime))
+	resp += fmt.Sprintf("\nEnd of sync:            %s```", config.PrintTime(endTime))
+
+	respond(resp)
 }
 
 func (m *Mux) Sync(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {

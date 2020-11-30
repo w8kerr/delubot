@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/w8kerr/delubot/config"
 )
 
 // Route holds information about a specific message route handler
@@ -121,6 +122,13 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 	// Create Context struct that we can put various infos into
 	ctx := &Context{
 		Content: strings.TrimSpace(mc.Content),
+	}
+
+	// Catch the special modmail "=v" command, alias it to a real command
+	if strings.HasPrefix(ctx.Content, "=v") {
+		if config.IsModmailChannel(ds, mc.GuildID, mc.ChannelID) {
+			ctx.Content = strings.TrimSpace(m.Prefix) + " v" + strings.TrimPrefix(ctx.Content, "=v")
+		}
 	}
 
 	// Fetch the channel for this Message

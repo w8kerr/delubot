@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/w8kerr/delubot/config"
@@ -82,32 +83,44 @@ func SafeAccessor(values [][]interface{}) func(int, int) string {
 	}
 }
 
-func GetCurrentPage(svc *sheets.Service, sheetID string) (*sheets.Sheet, error) {
+func GetCurrentPage(svc *sheets.Service, sheetID string) (*sheets.Sheet, bool, error) {
+	sheet, grantTime, removeTime, endTime, err := DoGetCurrentPage(svc, sheetID)
+	if err != nil {
+		return sheet, false, err
+	}
+
+	now := config.Now()
+	fmt.Println("Start:", config.PrintTime(grantTime), "End:", config.PrintTime(endTime), config.PrintTime(now))
+	fmt.Println("Found current page:", sheet.Properties.Title)
+	return sheet, now.After(removeTime), nil
+}
+
+func DoGetCurrentPage(svc *sheets.Service, sheetID string) (*sheets.Sheet, time.Time, time.Time, time.Time, error) {
 	resp, err := svc.Spreadsheets.Get(sheetID).Do()
 	if err != nil {
-		return &sheets.Sheet{}, err
+		return &sheets.Sheet{}, time.Time{}, time.Time{}, time.Time{}, err
 	}
 
 	for _, sheet := range resp.Sheets {
 		fmt.Println(sheet.Properties.Title, sheet.Properties.SheetId)
-		r := fmt.Sprintf("'%s'!B1:B2", sheet.Properties.Title)
+		r := fmt.Sprintf("'%s'!B1:B3", sheet.Properties.Title)
 		resp2, err := svc.Spreadsheets.Values.Get(sheetID, r).Do()
 		if err != nil {
-			return &sheets.Sheet{}, err
+			return &sheets.Sheet{}, time.Time{}, time.Time{}, time.Time{}, err
 		}
 
 		vals := SafeAccessor(resp2.Values)
 
-		startTime := config.ParseTime(vals(0, 0))
-		endTime := config.ParseTime(vals(1, 0))
+		grantTime := config.ParseTime(vals(0, 0))
+		removeTime := config.ParseTime(vals(1, 0))
+		endTime := config.ParseTime(vals(2, 0))
 		now := config.Now()
-		fmt.Println("Start:", config.PrintTime(startTime), "End:", config.PrintTime(endTime), config.PrintTime(now))
-		if now.After(startTime) && now.Before(endTime) {
-			fmt.Println("Found current page:", sheet.Properties.Title)
-			return sheet, nil
+
+		if now.After(grantTime) && now.Before(endTime) {
+			return sheet, grantTime, removeTime, endTime, nil
 		}
 	}
-	return &sheets.Sheet{}, errors.New("Not found")
+	return &sheets.Sheet{}, time.Time{}, time.Time{}, time.Time{}, errors.New("Not found")
 }
 
 func HasAccess(sheetID string) bool {
@@ -142,6 +155,7 @@ type RoleRow struct {
 	Range         RowRange
 	Username      string
 	Discriminator string
+	UserID        string
 	TimeStr       string
 	Plan          string
 }
@@ -183,7 +197,7 @@ func (r *RoleRow) ColorRequest(color sheets.Color) *sheets.Request {
 func ReadAllAutomatic(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) ([]RoleRow, error) {
 	rows := []RoleRow{}
 
-	r := fmt.Sprintf("'%s'!A6:C%d", sheet.Properties.Title, sheet.Properties.GridProperties.RowCount)
+	r := fmt.Sprintf("'%s'!A7:D%d", sheet.Properties.Title, sheet.Properties.GridProperties.RowCount)
 	resp, err := svc.Spreadsheets.Values.Get(sheetID, r).Do()
 	if err != nil {
 		log.Printf("Failed to read automatic section, %s", err)
@@ -195,21 +209,22 @@ func ReadAllAutomatic(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) 
 		if username == "" {
 			continue
 		}
-		rowIndex := i + 6
+		rowIndex := i + 7
 		rr := RowRange{
 			PageID:   sheet.Properties.SheetId,
 			RowStart: int64(rowIndex) - 1,
 			RowEnd:   int64(rowIndex),
 			ColStart: 0,
-			ColEnd:   3,
+			ColEnd:   4,
 		}
 		row := RoleRow{
 			Row:           rowIndex,
 			Range:         rr,
 			Username:      username,
 			Discriminator: disc,
-			TimeStr:       vals(i, 1),
-			Plan:          vals(i, 2),
+			UserID:        vals(i, 1),
+			TimeStr:       vals(i, 2),
+			Plan:          vals(i, 3),
 		}
 		rows = append(rows, row)
 	}
@@ -220,10 +235,10 @@ func ReadAllAutomatic(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) 
 func ReadAllManual(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) ([]RoleRow, error) {
 	rows := []RoleRow{}
 
-	r := fmt.Sprintf("'%s'!E6:H%d", sheet.Properties.Title, sheet.Properties.GridProperties.RowCount)
+	r := fmt.Sprintf("'%s'!F7:K%d", sheet.Properties.Title, sheet.Properties.GridProperties.RowCount)
 	resp, err := svc.Spreadsheets.Values.Get(sheetID, r).Do()
 	if err != nil {
-		log.Printf("Failed to read automatic section, %s", err)
+		log.Printf("Failed to read manual section, %s", err)
 		return rows, err
 	}
 	vals := SafeAccessor(resp.Values)
@@ -232,21 +247,22 @@ func ReadAllManual(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) ([]
 		if username == "" {
 			continue
 		}
-		rowIndex := i + 6
+		rowIndex := i + 7
 		rr := RowRange{
 			PageID:   sheet.Properties.SheetId,
 			RowStart: int64(rowIndex) - 1,
 			RowEnd:   int64(rowIndex),
-			ColStart: 4,
-			ColEnd:   9,
+			ColStart: 5,
+			ColEnd:   11,
 		}
 		row := RoleRow{
 			Row:           rowIndex,
 			Range:         rr,
 			Username:      username,
 			Discriminator: disc,
-			TimeStr:       vals(i, 1),
-			Plan:          vals(i, 3),
+			UserID:        vals(i, 1),
+			TimeStr:       vals(i, 2),
+			Plan:          vals(i, 4),
 		}
 		rows = append(rows, row)
 	}
@@ -257,10 +273,10 @@ func ReadAllManual(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) ([]
 func ReadAllExclude(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) ([]RoleRow, error) {
 	rows := []RoleRow{}
 
-	r := fmt.Sprintf("'%s'!K6:L%d", sheet.Properties.Title, sheet.Properties.GridProperties.RowCount)
+	r := fmt.Sprintf("'%s'!M7:Q%d", sheet.Properties.Title, sheet.Properties.GridProperties.RowCount)
 	resp, err := svc.Spreadsheets.Values.Get(sheetID, r).Do()
 	if err != nil {
-		log.Printf("Failed to read automatic section, %s", err)
+		log.Printf("Failed to read excluded section, %s", err)
 		return rows, err
 	}
 	vals := SafeAccessor(resp.Values)
@@ -269,20 +285,21 @@ func ReadAllExclude(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) ([
 		if username == "" || disc == "" {
 			continue
 		}
-		rowIndex := i + 6
+		rowIndex := i + 7
 		rr := RowRange{
 			PageID:   sheet.Properties.SheetId,
 			RowStart: int64(rowIndex) - 1,
 			RowEnd:   int64(rowIndex),
-			ColStart: 10,
-			ColEnd:   14,
+			ColStart: 12,
+			ColEnd:   17,
 		}
 		row := RoleRow{
 			Row:           rowIndex,
 			Range:         rr,
 			Username:      username,
 			Discriminator: disc,
-			TimeStr:       vals(i, 1),
+			UserID:        vals(i, 1),
+			TimeStr:       vals(i, 2),
 		}
 		rows = append(rows, row)
 	}
@@ -311,4 +328,61 @@ func MapRows(rows []RoleRow) map[string]RoleRow {
 	}
 
 	return m
+}
+
+func AddManualVerification(svc *sheets.Service, sheetID, handle, userID, proof, plan, verifiedBy string) error {
+	page, _, err := GetCurrentPage(svc, sheetID)
+	if err != nil {
+		return err
+	}
+
+	r := fmt.Sprintf("'%s'!E6:H%d", page.Properties.Title, page.Properties.GridProperties.RowCount)
+	resp, err := svc.Spreadsheets.Values.Get(sheetID, r).Do()
+	if err != nil {
+		return err
+	}
+	vals := SafeAccessor(resp.Values)
+
+	fillRow := -1
+	for i := 0; i < len(resp.Values); i++ {
+		username, disc := ParseDiscordHandle(vals(i, 0))
+		if username == "" || (username+"#"+disc == handle) {
+			fillRow = i + 6
+		}
+	}
+	if fillRow == -1 {
+		fillRow = len(resp.Values) + 6
+	}
+	r = fmt.Sprintf("'%s'!E%d:I%d", page.Properties.Title, fillRow, fillRow)
+	rr := RowRange{
+		PageID:   page.Properties.SheetId,
+		RowStart: int64(fillRow) - 1,
+		RowEnd:   int64(fillRow),
+		ColStart: 4,
+		ColEnd:   9,
+	}
+	row := RoleRow{Range: rr}
+	colorReq := row.ColorRequest(GreenHighlight)
+	if plan == "10000" {
+		colorReq = row.ColorRequest(YellowHighlight)
+	}
+
+	if plan == "" {
+		plan = "500"
+	}
+
+	vr := &sheets.ValueRange{}
+	vr.Values = append(vr.Values, []interface{}{handle, config.PrintTime(config.Now()), proof, plan, verifiedBy})
+
+	_, err = svc.Spreadsheets.Values.Update(sheetID, r, vr).ValueInputOption("RAW").Do()
+	if err != nil {
+		return err
+	}
+
+	err = UpdateFormatting(svc, sheetID, []*sheets.Request{colorReq})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

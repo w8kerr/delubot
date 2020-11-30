@@ -66,7 +66,7 @@ func Test_ReadAllAutomatic(t *testing.T) {
 		return
 	}
 
-	page, err := GetCurrentPage(svc, sheetID)
+	page, _, err := GetCurrentPage(svc, sheetID)
 	if err != nil {
 		fmt.Println("ERROR", err)
 		return

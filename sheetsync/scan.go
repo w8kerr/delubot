@@ -135,7 +135,7 @@ func DoSyncGuild(svc *sheets.Service, guildID string,
 	report func([]RoleRow, []RoleRow, []RoleRow, []RoleRow, []RoleRow), doFormat bool) {
 
 	sheetID := config.SyncSheet(guildID)
-	page, err := GetCurrentPage(svc, sheetID)
+	page, doRemove, err := GetCurrentPage(svc, sheetID)
 	if err != nil {
 		log.Printf("%s - Couldn't get the current page, %s", guildID, err)
 		return
@@ -221,7 +221,7 @@ func DoSyncGuild(svc *sheets.Service, guildID string,
 					}
 				}
 			}
-		} else {
+		} else if doRemove {
 			updated := false
 			failed := false
 			ensureNoAlpha(member, entry, &errors, &updated, &failed)

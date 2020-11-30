@@ -34,8 +34,8 @@ func IsModerator(ds *discordgo.Session, dm *discordgo.MessageCreate) bool {
 	return false
 }
 
-func GetResponder(ds *discordgo.Session, dm *discordgo.Message) func(msg string) {
-	return func(msg string) {
+func GetResponder(ds *discordgo.Session, dm *discordgo.Message) func(msg string) *discordgo.Message {
+	return func(msg string) *discordgo.Message {
 		msgParts := []string{}
 
 		runes := []rune(msg)
@@ -46,13 +46,23 @@ func GetResponder(ds *discordgo.Session, dm *discordgo.Message) func(msg string)
 		}
 		msgParts = append(msgParts, string(runes))
 
+		var ret *discordgo.Message
+		var err error
 		for i, part := range msgParts {
-			_, err := ds.ChannelMessageSend(dm.ChannelID, part)
+			ret, err = ds.ChannelMessageSend(dm.ChannelID, part)
 			if err != nil {
 				fmt.Println(i, len(part), err)
 				fmt.Println(part)
 			}
 		}
+
+		return ret
+	}
+}
+
+func GetEditor(ds *discordgo.Session, dm *discordgo.Message) func(msg string) {
+	return func(msg string) {
+		ds.ChannelMessageEdit(dm.ChannelID, dm.ID, msg)
 	}
 }
 
