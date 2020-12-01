@@ -25,15 +25,15 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 		return
 	}
 
-	success := false
 	handle := ""
 	userID := ""
 	proofs := []string{}
 	for i := len(msgs) - 1; i >= 0; i-- {
 		msg := msgs[i]
-		var attachments []string
-		success, handle, userID, attachments = parseVerifMsg(msg)
+		success, h, uID, attachments := parseVerifMsg(msg)
 		if success {
+			handle = h
+			userID = uID
 			proofs = append(proofs, attachments...)
 		}
 	}
