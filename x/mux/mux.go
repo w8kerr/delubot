@@ -131,6 +131,13 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		}
 	}
 
+	// Catch the special modmail "=vd" command, alias it to a real command
+	if strings.HasPrefix(ctx.Content, "=vd") {
+		if config.IsModmailChannel(ds, mc.GuildID, mc.ChannelID) {
+			ctx.Content = strings.TrimSpace(m.Prefix) + " vd" + strings.TrimPrefix(ctx.Content, "=vd")
+		}
+	}
+
 	// Fetch the channel for this Message
 	var c *discordgo.Channel
 	c, err = ds.State.Channel(mc.ChannelID)

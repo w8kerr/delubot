@@ -32,6 +32,7 @@ func init() {
 	Router.Route("config", "Display all saved configuration objects", Router.Config)
 	Router.Route("refreshconfig", "Refresh config from the database", Router.RefreshConfig)
 	Router.Route("v", "Close a modmail and copy the verification to the role sync spreadsheet", Router.Verify)
+	Router.Route("vd", "Debug the verify command", Router.VDebug)
 
 	fmt.Println("MUX INIT", Router.Prefix)
 }

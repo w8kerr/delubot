@@ -1,6 +1,7 @@
 package mux
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -10,6 +11,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/w8kerr/delubot/config"
 	"github.com/w8kerr/delubot/sheetsync"
+	"github.com/w8kerr/delubot/utils"
 )
 
 func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
@@ -30,8 +32,8 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 	proofs := []string{}
 	for i := len(msgs) - 1; i >= 0; i-- {
 		msg := msgs[i]
-		success, h, uID, attachments := parseVerifMsg(msg)
-		if success {
+		h, uID, attachments, err := parseVerifMsg(msg)
+		if err == nil {
 			handle = h
 			userID = uID
 			proofs = append(proofs, attachments...)
@@ -135,29 +137,76 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 	edit(resp)
 }
 
-var footerRE = regexp.MustCompile(`^(.+) \| (\d{18})$`)
+func (m *Mux) VDebug(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
+	respond := GetResponder(ds, dm)
+	respond("=🔺Debugging verification (check internal logs)...")
+	fmt.Println("```🔺Processing verification...```")
 
-func parseVerifMsg(msg *discordgo.Message) (bool, string, string, []string) {
+	// Get last 10 messages
+	msgs, err := ds.ChannelMessages(dm.ChannelID, 100, "", "", "")
+	if err != nil {
+		fmt.Println(fmt.Sprintf("```Failed to get channel messages, %s```", err))
+		return
+	}
+
+	resp := "=🔺Messages in this channel:"
+
+	proofs := []string{}
+	for i := len(msgs) - 1; i >= 0; i-- {
+		msg := msgs[i]
+		msgLines := strings.Split(msg.Content, "\n")
+		resp += fmt.Sprintf("\n> Message %d (%s)", i, msgLines[0])
+		_, _, attachments, err := parseVerifMsg(msg)
+		if err == nil {
+			proofs = append(proofs, attachments...)
+
+			line := "Extracted proofs: " + strings.Join(attachments, " | ")
+			resp += "\n" + line
+			fmt.Println(line)
+		} else {
+			line := err.Error()
+			resp += "\n" + line
+			fmt.Println(line)
+		}
+
+		utils.PrintJSON(msg)
+	}
+
+	if len(proofs) > 0 {
+		resp += "\n\nFinal extracted proofs: " + strings.Join(proofs, " | ")
+	} else {
+		resp += "\n\nNo proofs extracted"
+	}
+
+	respond(resp)
+}
+
+var footerRE = regexp.MustCompile(`^(.+) \| (\d{16,18})$`)
+
+func parseVerifMsg(msg *discordgo.Message) (string, string, []string, error) {
 	if len(msg.Attachments) == 0 {
-		return false, "", "", []string{}
+		return "", "", []string{}, errors.New("No attachments")
 	}
 	if len(msg.Embeds) == 0 {
-		return false, "", "", []string{}
+		return "", "", []string{}, errors.New("No embeds")
 	}
 	if msg.Embeds[0].Footer == nil {
-		return false, "", "", []string{}
+		return "", "", []string{}, errors.New("No embed footer")
+	}
+	if msg.Embeds[0].Title != "Message Received" {
+		return "", "", []string{}, errors.New("Embed title was not 'Message Received'")
 	}
 
 	footer := msg.Embeds[0].Footer.Text
 	footerMatch := footerRE.FindSubmatch([]byte(footer))
 	if footerMatch == nil {
-		return false, "", "", []string{}
+		return "", "", []string{}, errors.New("Footer did not match expected pattern")
 	}
 	handle := string(footerMatch[1])
 	userID := string(footerMatch[2])
 
 	if handle == "" || userID == "" {
-		return false, "", "", []string{}
+		return "", "", []string{}, fmt.Errorf("Either handle (%s) or userID (%s) was nil", handle, userID)
 	}
 
 	attachments := []string{}
@@ -166,8 +215,8 @@ func parseVerifMsg(msg *discordgo.Message) (bool, string, string, []string) {
 	}
 
 	if len(attachments) == 0 {
-		return false, "", "", []string{}
+		return "", "", []string{}, errors.New("No attachments found in the end")
 	}
 
-	return true, handle, userID, attachments
+	return handle, userID, attachments, nil
 }
