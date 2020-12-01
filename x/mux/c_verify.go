@@ -111,7 +111,7 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 	if logChanID != "" {
 		logResp := "Handle:   " + handle
 		logResp += "\nID:            " + userID
-		logResp += "\nURL:         " + proof
+		logResp += "\nProof:      " + proof
 		logResp += fmt.Sprintf("\nPlan:         %d", plan)
 		logResp += "\nVerified:  " + dm.Author.Username
 		_, err := ds.ChannelMessageSend(logChanID, logResp)
