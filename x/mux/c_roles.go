@@ -10,7 +10,9 @@ import (
 )
 
 func (m *Mux) SyncSheet(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
-	respond := GetResponder(ds, dm)
+	prerespond := GetResponder(ds, dm)
+	msg := prerespond("Processing...")
+	respond := GetEditor(ds, msg)
 
 	ctx.Content = strings.TrimPrefix(ctx.Content, "syncsheet")
 	ctx.Content = strings.TrimSpace(ctx.Content)
@@ -65,64 +67,130 @@ func (m *Mux) SyncSheet(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 	resp += fmt.Sprintf("\nCurrent month's page:   %s", sheet.Properties.Title)
 	resp += fmt.Sprintf("\nStart granting roles:   %s", config.PrintTime(grantTime))
 	resp += fmt.Sprintf("\nStart removing roles:   %s", config.PrintTime(removeTime))
-	resp += fmt.Sprintf("\nEnd of sync:            %s```", config.PrintTime(endTime))
+	resp += fmt.Sprintf("\nEnd of sync:            %s", config.PrintTime(endTime))
+	if config.RoleGrantIsEnabled(dm.GuildID) {
+		resp += "\nRole granting:          Enabled"
+	} else {
+		resp += "\nRole granting:          Disabled"
+	}
+	if config.RoleRemoveIsEnabled(dm.GuildID) {
+		resp += "\nRole removal:           Enabled"
+	} else {
+		resp += "\nRole removal:           Disabled"
+	}
+	resp += "```"
 
 	respond(resp)
 }
 
-func (m *Mux) Sync(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
+func (m *Mux) RoleGrant(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	respond := GetResponder(ds, dm)
 
-	enabled := config.SyncIsEnabled(dm.GuildID)
+	enabled := config.RoleGrantIsEnabled(dm.GuildID)
 
-	ctx.Content = strings.TrimPrefix(ctx.Content, "sync")
+	ctx.Content = strings.TrimPrefix(ctx.Content, "rolegrant")
 	ctx.Content = strings.TrimSpace(ctx.Content)
 	if ctx.Content == "enable" {
 		if enabled {
-			respond("Role sync is already enabled!")
+			respond("Role granting is already enabled!")
 			return
 		}
 
 		sheetID := config.SyncSheet(dm.GuildID)
 		if sheetID == "" {
-			respond("Can't enable role sync, no sync Sheet is defined")
+			respond("Can't enable role granting, no sync Sheet is defined")
 			return
 		}
 		canAccess := sheetsync.HasAccess(sheetID)
 		if !canAccess {
-			respond(fmt.Sprintf("Can't enable role sync, the current sync Sheet `%s` could not be accessed", sheetID))
+			respond(fmt.Sprintf("Can't enable role granting, the current sync Sheet `%s` could not be accessed", sheetID))
 			return
 		}
 
-		err := config.SetSyncEnabled(dm.GuildID, true)
+		err := config.SetRoleGrantEnabled(dm.GuildID, true)
 		if err != nil {
-			respond(fmt.Sprintf("Failed to enable syncing, %s", err))
+			respond(fmt.Sprintf("Failed to enable role granting, %s", err))
 			return
 		}
 
-		respond("Role sync enabled!")
+		respond("Role granting enabled!")
 		return
 	} else if ctx.Content == "disable" {
 		if !enabled {
-			respond("Role sync is already disabled!")
+			respond("Role granting is already disabled!")
 			return
 		}
 
-		err := config.SetSyncEnabled(dm.GuildID, false)
+		err := config.SetRoleGrantEnabled(dm.GuildID, false)
 		if err != nil {
-			respond(fmt.Sprintf("Failed to disable syncing, %s", err))
+			respond(fmt.Sprintf("Failed to disable granting, %s", err))
 			return
 		}
 
-		respond("Role sync disabled!")
+		respond("Role granting disabled!")
 		return
 	}
 
 	if enabled {
-		respond("Role sync is currently enabled!")
+		respond("Role granting is currently enabled!")
 		return
 	}
-	respond("Role sync is currently disabled!")
+	respond("Role granting is currently disabled!")
+}
+
+func (m *Mux) RoleRemove(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
+	respond := GetResponder(ds, dm)
+
+	enabled := config.RoleRemoveIsEnabled(dm.GuildID)
+
+	ctx.Content = strings.TrimPrefix(ctx.Content, "roleremove")
+	ctx.Content = strings.TrimSpace(ctx.Content)
+	if ctx.Content == "enable" {
+		if enabled {
+			respond("Role removal is already enabled!")
+			return
+		}
+
+		sheetID := config.SyncSheet(dm.GuildID)
+		if sheetID == "" {
+			respond("Can't enable role removal, no sync Sheet is defined")
+			return
+		}
+		canAccess := sheetsync.HasAccess(sheetID)
+		if !canAccess {
+			respond(fmt.Sprintf("Can't enable role removal, the current sync Sheet `%s` could not be accessed", sheetID))
+			return
+		}
+
+		err := config.SetRoleRemoveEnabled(dm.GuildID, true)
+		if err != nil {
+			respond(fmt.Sprintf("Failed to enable role removal, %s", err))
+			return
+		}
+
+		respond("Role removal enabled!")
+		return
+	} else if ctx.Content == "disable" {
+		if !enabled {
+			respond("Role removal is already disabled!")
+			return
+		}
+
+		err := config.SetRoleRemoveEnabled(dm.GuildID, false)
+		if err != nil {
+			respond(fmt.Sprintf("Failed to disable removal, %s", err))
+			return
+		}
+
+		respond("Role removal disabled!")
+		return
+	}
+
+	if enabled {
+		respond("Role removal is currently enabled!")
+		return
+	}
+	respond("Role removal is currently disabled!")
 }
 
 func (m *Mux) AlphaRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
@@ -181,6 +249,64 @@ func (m *Mux) AlphaRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 	}
 
 	respond("No Alpha role is configured")
+}
+
+func (m *Mux) SpecialRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
+	respond := GetResponder(ds, dm)
+
+	roles, err := ds.GuildRoles(dm.GuildID)
+	if err != nil {
+		respond(err.Error())
+		return
+	}
+
+	ctx.Content = strings.TrimPrefix(ctx.Content, "specialrole")
+	ctx.Content = strings.TrimSpace(ctx.Content)
+	if ctx.Content == "clear" {
+		err = config.SetSpecialRole(dm.GuildID, "")
+		if err != nil {
+			respond(fmt.Sprintf("Failed to clear special role, %s", err))
+			return
+		}
+
+		respond("Special role cleared")
+		return
+	} else if ctx.Content != "" {
+		roleID := ""
+		roleName := ""
+		for _, role := range roles {
+			if role.ID == ctx.Content || role.Name == ctx.Content {
+				roleID = role.ID
+				roleName = role.Name
+				break
+			}
+		}
+
+		if roleID == "" {
+			respond(fmt.Sprintf("No role found matching ID or Name '%s'", ctx.Content))
+			return
+		}
+
+		err = config.SetSpecialRole(dm.GuildID, roleID)
+		if err != nil {
+			respond(fmt.Sprintf("Failed to set special role, %s", err))
+			return
+		}
+
+		respond(fmt.Sprintf("Special role set to %s (`%s`)", roleName, roleID))
+		return
+	}
+
+	specialRoleID := config.SpecialRole(dm.GuildID)
+	for _, role := range roles {
+		if role.ID == specialRoleID {
+			resp := fmt.Sprintf("Special role: %s (`%s`)", role.Name, role.ID)
+			respond(resp)
+			return
+		}
+	}
+
+	respond("No Special role is configured")
 }
 
 func (m *Mux) WhaleRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {

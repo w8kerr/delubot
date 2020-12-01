@@ -15,7 +15,8 @@ func (m *Mux) Config(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 	resp += "Grant roles: " + utils.PrintJSONStr(config.GrantRoles)
 	resp += "\nModerator roles: " + utils.PrintJSONStr(config.ModeratorRoles)
 	resp += "\nSync sheets: " + utils.PrintJSONStr(config.SyncSheets)
-	resp += "\nSync enabled: " + utils.PrintJSONStr(config.SyncEnabled)
+	resp += "\nRole granting enabled: " + utils.PrintJSONStr(config.RoleGrantEnabled)
+	resp += "\nRole removal enabled: " + utils.PrintJSONStr(config.RoleRemoveEnabled)
 	resp += "\nTime format: " + utils.PrintJSONStr(config.TimeFormat)
 	resp += "\nGoogle Credentials: Secret!"
 	resp += "```"

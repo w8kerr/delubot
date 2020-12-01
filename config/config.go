@@ -32,20 +32,23 @@ var ModeratorRoles = map[string][]string{
 }
 
 type RoleConfig struct {
-	Alpha string `json:"alpha" bson:"alpha"`
-	Whale string `json:"whale" bson:"whale"`
+	Alpha   string `json:"alpha" bson:"alpha"`
+	Special string `json:"special" bson:"special"`
+	Whale   string `json:"whale" bson:"whale"`
 }
 
 var GrantRoles = map[string]RoleConfig{
 	"755437328515989564": { // DFS
-		Alpha: "760705266953355295",
-		Whale: "761570574794489886",
+		Alpha:   "760705266953355295",
+		Special: "783112023570513970",
+		Whale:   "761570574794489886",
 	},
 }
 
 var SyncSheets = map[string]string{}
 
-var SyncEnabled = map[string]bool{}
+var RoleGrantEnabled = map[string]bool{}
+var RoleRemoveEnabled = map[string]bool{}
 
 var ModmailCategories = map[string]string{
 	"755437328515989564": "779849308525690900",
@@ -65,7 +68,8 @@ type BotConfig struct {
 	ModeratorRoles    map[string][]string   `json:"moderator_roles" bson:"moderator_roles"`
 	GrantRoles        map[string]RoleConfig `json:"grant_roles" bson:"grant_roles"`
 	SyncSheets        map[string]string     `json:"sync_sheets" bson:"sync_sheets"`
-	SyncEnabled       map[string]bool       `json:"sync_enabled" bson:"sync_enabled"`
+	RoleGrantEnabled  map[string]bool       `json:"role_grant_enabled" bson:"role_grant_enabled"`
+	RoleRemoveEnabled map[string]bool       `json:"role_remove_enabled" bson:"role_remove_enabled"`
 	TimeFormat        string                `json:"time_format" bson:"time_format"`
 	GoogleCredentials bson.M                `json:"-" bson:"google_credentials"`
 }
@@ -84,17 +88,6 @@ func Get(c context.Context) models.Config {
 }
 
 func LoadConfig() error {
-
-	defaultConfig := BotConfig{
-		ModeratorRoles: ModeratorRoles,
-		GrantRoles:     GrantRoles,
-		SyncSheets:     SyncSheets,
-		TimeFormat:     TimeFormat,
-	}
-
-	fmt.Println("DEFAULT CONFIG")
-	utils.PrintJSON(defaultConfig)
-
 	session := mongo.MDB.Clone()
 	defer session.Close()
 	session.SetMode(mgo.Strong, false)
@@ -108,15 +101,26 @@ func LoadConfig() error {
 		return err
 	}
 
-	fmt.Println("CONFIG FROM DB")
-	utils.PrintJSON(config)
-
 	ModeratorRoles = config.ModeratorRoles
 	GrantRoles = config.GrantRoles
 	SyncSheets = config.SyncSheets
-	SyncEnabled = config.SyncEnabled
+	RoleGrantEnabled = config.RoleGrantEnabled
+	RoleRemoveEnabled = config.RoleRemoveEnabled
 	TimeFormat = config.TimeFormat
 	GoogleCredentials = config.GoogleCredentials
+
+	if GrantRoles == nil {
+		GrantRoles = make(map[string]RoleConfig)
+	}
+	if SyncSheets == nil {
+		SyncSheets = make(map[string]string)
+	}
+	if RoleGrantEnabled == nil {
+		RoleGrantEnabled = make(map[string]bool)
+	}
+	if RoleRemoveEnabled == nil {
+		RoleRemoveEnabled = make(map[string]bool)
+	}
 
 	Loc, _ = time.LoadLocation("Asia/Tokyo")
 
@@ -148,14 +152,24 @@ func SyncSheet(guildID string) string {
 	return syncSheet
 }
 
-// SyncIsEnabled Return whether syncing is enabled for the given guild
-func SyncIsEnabled(guildID string) bool {
-	syncEnabled, ok := SyncEnabled[guildID]
+// RoleGrantIsEnabled Return whether syncing is enabled for the given guild
+func RoleGrantIsEnabled(guildID string) bool {
+	grantEnabled, ok := RoleGrantEnabled[guildID]
 	if !ok {
 		return false
 	}
 
-	return syncEnabled
+	return grantEnabled
+}
+
+// RoleRemoveIsEnabled Return whether syncing is enabled for the given guild
+func RoleRemoveIsEnabled(guildID string) bool {
+	removeEnabled, ok := RoleRemoveEnabled[guildID]
+	if !ok {
+		return false
+	}
+
+	return removeEnabled
 }
 
 // AlphaRole get the designated alpha role for the given guild
@@ -169,7 +183,18 @@ func AlphaRole(guildID string) string {
 	return guildRoles.Alpha
 }
 
-// WhaleRole get the designated alpha role for the given guild
+// SpecialRole get the designated special role for the given guild
+func SpecialRole(guildID string) string {
+	guildRoles, ok := GrantRoles[guildID]
+	if !ok {
+		log.Printf("Could not find guild roles, %s", guildID)
+		return ""
+	}
+
+	return guildRoles.Special
+}
+
+// WhaleRole get the designated whale role for the given guild
 func WhaleRole(guildID string) string {
 	guildRoles, ok := GrantRoles[guildID]
 	if !ok {
@@ -240,6 +265,29 @@ func SetAlphaRole(guildID, roleID string) error {
 	return nil
 }
 
+func SetSpecialRole(guildID, roleID string) error {
+	key := fmt.Sprintf("grant_roles.%s.special", guildID)
+	update := bson.M{
+		key: roleID,
+	}
+
+	err := UpdateConfig(update)
+	if err != nil {
+		return err
+	}
+
+	if v, ok := GrantRoles[guildID]; ok {
+		v.Special = roleID
+		GrantRoles[guildID] = v
+	} else {
+		GrantRoles[guildID] = RoleConfig{
+			Special: roleID,
+		}
+	}
+
+	return nil
+}
+
 func SetWhaleRole(guildID, roleID string) error {
 	key := fmt.Sprintf("grant_roles.%s.whale", guildID)
 	update := bson.M{
@@ -279,8 +327,8 @@ func SetSyncSheet(guildID, sheetID string) error {
 	return nil
 }
 
-func SetSyncEnabled(guildID string, enabled bool) error {
-	key := fmt.Sprintf("sync_enabled.%s", guildID)
+func SetRoleGrantEnabled(guildID string, enabled bool) error {
+	key := fmt.Sprintf("role_grant_enabled.%s", guildID)
 	update := bson.M{
 		key: enabled,
 	}
@@ -290,7 +338,23 @@ func SetSyncEnabled(guildID string, enabled bool) error {
 		return err
 	}
 
-	SyncEnabled[guildID] = enabled
+	RoleGrantEnabled[guildID] = enabled
+
+	return nil
+}
+
+func SetRoleRemoveEnabled(guildID string, enabled bool) error {
+	key := fmt.Sprintf("role_remove_enabled.%s", guildID)
+	update := bson.M{
+		key: enabled,
+	}
+
+	err := UpdateConfig(update)
+	if err != nil {
+		return err
+	}
+
+	RoleRemoveEnabled[guildID] = enabled
 
 	return nil
 }

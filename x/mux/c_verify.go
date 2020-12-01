@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -41,39 +42,46 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 		return
 	}
 
-	plan := strings.TrimSpace(strings.TrimPrefix(ctx.Content, "v"))
+	planStr := strings.TrimSpace(strings.TrimPrefix(ctx.Content, "v"))
+	plan, _ := strconv.Atoi(planStr)
+	if plan == 0 {
+		plan = 500
+	}
 
 	edit("```Granting roles...```")
-	if plan == "10000" {
+	if plan >= 500 {
 		alphaRole := config.AlphaRole(dm.GuildID)
 		if alphaRole == "" {
 			edit("```Could not verify, no Alpha role is configured```")
 			return
 		}
+		err := ds.GuildMemberRoleAdd(dm.GuildID, userID, alphaRole)
+		if err != nil {
+			edit("```Could not verify, error adding Alpha role, " + err.Error() + "```")
+			return
+		}
+	}
+	if plan >= 1500 {
+		specialRole := config.SpecialRole(dm.GuildID)
+		if specialRole == "" {
+			edit("```Could not verify, no Special role is configured```")
+			return
+		}
+		err = ds.GuildMemberRoleAdd(dm.GuildID, userID, specialRole)
+		if err != nil {
+			edit("```Could not verify, error adding Special role, " + err.Error() + "```")
+			return
+		}
+	}
+	if plan >= 10000 {
 		whaleRole := config.WhaleRole(dm.GuildID)
 		if whaleRole == "" {
 			edit("```Could not verify, no Whale role is configured```")
 			return
 		}
-		err := ds.GuildMemberRoleAdd(dm.GuildID, userID, alphaRole)
-		if err != nil {
-			edit("```Could not verify, error adding Alpha role, " + err.Error() + "```")
-			return
-		}
 		err = ds.GuildMemberRoleAdd(dm.GuildID, userID, whaleRole)
 		if err != nil {
 			edit("```Could not verify, error adding Whale role, " + err.Error() + "```")
-			return
-		}
-	} else {
-		alphaRole := config.AlphaRole(dm.GuildID)
-		if alphaRole == "" {
-			edit("```Could not verify, no Alpha role is configured```")
-			return
-		}
-		err := ds.GuildMemberRoleAdd(dm.GuildID, userID, alphaRole)
-		if err != nil {
-			edit("```Could not verify, error adding Alpha role, " + err.Error() + "```")
 			return
 		}
 	}
@@ -101,7 +109,7 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 		logResp := "Handle:   " + handle
 		logResp += "\nID:            " + userID
 		logResp += "\nURL:         " + proof
-		logResp += "\nPlan:         " + plan
+		logResp += fmt.Sprintf("\nPlan:         %d", plan)
 		logResp += "\nVerified:  " + dm.Author.Username
 		_, err := ds.ChannelMessageSend(logChanID, logResp)
 		if err != nil {
@@ -110,8 +118,13 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 	}
 
 	resp := "```Verification recorded"
-	resp += "\nAlpha role granted to " + handle
-	if plan == "10000" {
+	if plan >= 500 {
+		resp += "\nAlpha role granted to " + handle
+	}
+	if plan >= 1500 {
+		resp += "\nSpecial role granted to " + handle
+	}
+	if plan >= 10000 {
 		resp += "\nWhale role granted to " + handle
 	}
 	resp += "\n\nYou may close the channel now```"

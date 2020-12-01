@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -26,6 +27,12 @@ var YellowHighlight = sheets.Color{
 	Red:   1,
 	Green: 0.898,
 	Blue:  0.6,
+	Alpha: 1.0,
+}
+var BlueHighlight = sheets.Color{
+	Red:   0.624,
+	Green: 0.773,
+	Blue:  0.91,
 	Alpha: 1.0,
 }
 var RedHighlight = sheets.Color{
@@ -157,7 +164,7 @@ type RoleRow struct {
 	Discriminator string
 	UserID        string
 	TimeStr       string
-	Plan          string
+	Plan          int
 }
 
 type RowRange struct {
@@ -209,6 +216,10 @@ func ReadAllAutomatic(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) 
 		if username == "" {
 			continue
 		}
+		plan, _ := strconv.Atoi(vals(i, 3))
+		if plan == 0 {
+			plan = 500
+		}
 		rowIndex := i + 7
 		rr := RowRange{
 			PageID:   sheet.Properties.SheetId,
@@ -224,7 +235,7 @@ func ReadAllAutomatic(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) 
 			Discriminator: disc,
 			UserID:        vals(i, 1),
 			TimeStr:       vals(i, 2),
-			Plan:          vals(i, 3),
+			Plan:          plan,
 		}
 		rows = append(rows, row)
 	}
@@ -247,6 +258,11 @@ func ReadAllManual(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) ([]
 		if username == "" {
 			continue
 		}
+		plan, _ := strconv.Atoi(vals(i, 4))
+		if plan == 0 {
+			plan = 500
+		}
+		fmt.Println("READ MANUAL", username, disc, plan)
 		rowIndex := i + 7
 		rr := RowRange{
 			PageID:   sheet.Properties.SheetId,
@@ -262,7 +278,7 @@ func ReadAllManual(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) ([]
 			Discriminator: disc,
 			UserID:        vals(i, 1),
 			TimeStr:       vals(i, 2),
-			Plan:          vals(i, 4),
+			Plan:          plan,
 		}
 		rows = append(rows, row)
 	}
@@ -330,13 +346,13 @@ func MapRows(rows []RoleRow) map[string]RoleRow {
 	return m
 }
 
-func AddManualVerification(svc *sheets.Service, sheetID, handle, userID, proof, plan, verifiedBy string) error {
+func AddManualVerification(svc *sheets.Service, sheetID, handle, userID, proof string, plan int, verifiedBy string) error {
 	page, _, err := GetCurrentPage(svc, sheetID)
 	if err != nil {
 		return err
 	}
 
-	r := fmt.Sprintf("'%s'!E6:H%d", page.Properties.Title, page.Properties.GridProperties.RowCount)
+	r := fmt.Sprintf("'%s'!G7:G%d", page.Properties.Title, page.Properties.GridProperties.RowCount)
 	resp, err := svc.Spreadsheets.Values.Get(sheetID, r).Do()
 	if err != nil {
 		return err
@@ -345,34 +361,33 @@ func AddManualVerification(svc *sheets.Service, sheetID, handle, userID, proof, 
 
 	fillRow := -1
 	for i := 0; i < len(resp.Values); i++ {
-		username, disc := ParseDiscordHandle(vals(i, 0))
-		if username == "" || (username+"#"+disc == handle) {
-			fillRow = i + 6
+		id := vals(i, 0)
+		if id == "" || id == userID {
+			fillRow = i + 7
 		}
 	}
 	if fillRow == -1 {
-		fillRow = len(resp.Values) + 6
+		fillRow = len(resp.Values) + 7
 	}
-	r = fmt.Sprintf("'%s'!E%d:I%d", page.Properties.Title, fillRow, fillRow)
+	r = fmt.Sprintf("'%s'!F%d:K%d", page.Properties.Title, fillRow, fillRow)
 	rr := RowRange{
 		PageID:   page.Properties.SheetId,
 		RowStart: int64(fillRow) - 1,
 		RowEnd:   int64(fillRow),
-		ColStart: 4,
-		ColEnd:   9,
+		ColStart: 5,
+		ColEnd:   11,
 	}
 	row := RoleRow{Range: rr}
 	colorReq := row.ColorRequest(GreenHighlight)
-	if plan == "10000" {
-		colorReq = row.ColorRequest(YellowHighlight)
-	}
 
-	if plan == "" {
-		plan = "500"
+	if plan >= 10000 {
+		colorReq = row.ColorRequest(YellowHighlight)
+	} else if plan >= 1500 {
+		colorReq = row.ColorRequest(BlueHighlight)
 	}
 
 	vr := &sheets.ValueRange{}
-	vr.Values = append(vr.Values, []interface{}{handle, config.PrintTime(config.Now()), proof, plan, verifiedBy})
+	vr.Values = append(vr.Values, []interface{}{handle, userID, config.PrintTime(config.Now()), proof, plan, verifiedBy})
 
 	_, err = svc.Spreadsheets.Values.Update(sheetID, r, vr).ValueInputOption("RAW").Do()
 	if err != nil {
