@@ -1,1 +1,1 @@
-web: ./bin/delubot
+worker: ./bin/delubot
