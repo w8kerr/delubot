@@ -11,7 +11,7 @@ import (
 )
 
 func Sweeper() {
-	sleepDuration := 10 * time.Second
+	sleepDuration := 60 * time.Second
 	for {
 		time.Sleep(sleepDuration)
 		Scan()
