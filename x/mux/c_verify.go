@@ -14,9 +14,9 @@ import (
 
 func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	respond := GetResponder(ds, dm)
-	msg := respond("=Processing verification...")
+	msg := respond("=🔺Processing verification...")
 	edit := GetEditor(ds, msg)
-	edit("```Processing verification...```")
+	edit("```🔺Processing verification...```")
 
 	// Get last 10 messages
 	msgs, err := ds.ChannelMessages(dm.ChannelID, 100, "", "", "")
@@ -28,19 +28,22 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 	success := false
 	handle := ""
 	userID := ""
-	proof := ""
+	proofs := []string{}
 	for i := len(msgs) - 1; i >= 0; i-- {
 		msg := msgs[i]
-		success, handle, userID, proof = parseVerifMsg(msg)
+		var attachments []string
+		success, handle, userID, attachments = parseVerifMsg(msg)
 		if success {
-			break
+			proofs = append(proofs, attachments...)
 		}
 	}
 
-	if !success {
+	if len(proofs) == 0 {
 		edit("```Could not verify, no attachments found```")
 		return
 	}
+
+	proof := strings.Join(proofs, " | ")
 
 	planStr := strings.TrimSpace(strings.TrimPrefix(ctx.Content, "v"))
 	plan, _ := strconv.Atoi(planStr)
@@ -48,7 +51,7 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 		plan = 500
 	}
 
-	edit("```Granting roles...```")
+	edit("```🔺Granting roles...```")
 	if plan >= 500 {
 		alphaRole := config.AlphaRole(dm.GuildID)
 		if alphaRole == "" {
@@ -86,7 +89,7 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 		}
 	}
 
-	edit("```Updating Google Sheet...```")
+	edit("```🔺Updating Google Sheet...```")
 	sheetID := config.SyncSheet(dm.GuildID)
 	if sheetID == "" {
 		edit("```Could not verify, no Google Sheet is configured, " + err.Error() + "```")
@@ -103,7 +106,7 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 		return
 	}
 
-	edit("```Recording log...```")
+	edit("```🔺Recording log...```")
 	logChanID := config.LogChannel(dm.GuildID)
 	if logChanID != "" {
 		logResp := "Handle:   " + handle
@@ -117,15 +120,15 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 		}
 	}
 
-	resp := "```Verification recorded"
+	resp := "```🔺Verification recorded"
 	if plan >= 500 {
-		resp += "\nAlpha role granted to " + handle
+		resp += "\nAlpha role granted to   " + handle
 	}
 	if plan >= 1500 {
 		resp += "\nSpecial role granted to " + handle
 	}
 	if plan >= 10000 {
-		resp += "\nWhale role granted to " + handle
+		resp += "\nWhale role granted to   " + handle
 	}
 	resp += "\n\nYou may close the channel now```"
 
@@ -134,27 +137,27 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 
 var footerRE = regexp.MustCompile(`^(.+) \| (\d{18})$`)
 
-func parseVerifMsg(msg *discordgo.Message) (bool, string, string, string) {
+func parseVerifMsg(msg *discordgo.Message) (bool, string, string, []string) {
 	if len(msg.Attachments) == 0 {
-		return false, "", "", ""
+		return false, "", "", []string{}
 	}
 	if len(msg.Embeds) == 0 {
-		return false, "", "", ""
+		return false, "", "", []string{}
 	}
 	if msg.Embeds[0].Footer == nil {
-		return false, "", "", ""
+		return false, "", "", []string{}
 	}
 
 	footer := msg.Embeds[0].Footer.Text
 	footerMatch := footerRE.FindSubmatch([]byte(footer))
 	if footerMatch == nil {
-		return false, "", "", ""
+		return false, "", "", []string{}
 	}
 	handle := string(footerMatch[1])
 	userID := string(footerMatch[2])
 
 	if handle == "" || userID == "" {
-		return false, "", "", ""
+		return false, "", "", []string{}
 	}
 
 	attachments := []string{}
@@ -163,10 +166,8 @@ func parseVerifMsg(msg *discordgo.Message) (bool, string, string, string) {
 	}
 
 	if len(attachments) == 0 {
-		return false, "", "", ""
+		return false, "", "", []string{}
 	}
 
-	proof := strings.Join(attachments, ", ")
-
-	return true, handle, userID, proof
+	return true, handle, userID, attachments
 }
