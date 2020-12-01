@@ -40,18 +40,23 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 		}
 	}
 
+	planStr := strings.TrimSpace(strings.TrimPrefix(ctx.Content, "v"))
+	parts := strings.Split(planStr, " ")
+	plan, _ := strconv.Atoi(parts[0])
+	if plan == 0 {
+		plan = 500
+	}
+
+	if len(parts) > 1 {
+		proofs = parts[1:]
+	}
+
 	if len(proofs) == 0 {
 		edit("```Could not verify, no attachments found```")
 		return
 	}
 
 	proof := strings.Join(proofs, " | ")
-
-	planStr := strings.TrimSpace(strings.TrimPrefix(ctx.Content, "v"))
-	plan, _ := strconv.Atoi(planStr)
-	if plan == 0 {
-		plan = 500
-	}
 
 	edit("```🔺Granting roles...```")
 	if plan >= 500 {
