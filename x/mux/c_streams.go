@@ -65,7 +65,7 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 			Title:       rec.StreamTitle,
 			Description: fmt.Sprintf("%s\nSee %s for link", TimeBefore(rec.ScheduledTime), rec.PostLink),
 			Footer: &discordgo.MessageEmbedFooter{
-				Text: fmt.Sprintf("\n`Restricted to ¥%d plan members`", rec.PostPlan),
+				Text: fmt.Sprintf("\nRestricted to ¥%d plan members", rec.PostPlan),
 			},
 			Thumbnail: &discordgo.MessageEmbedThumbnail{
 				URL: rec.StreamThumbnail,
