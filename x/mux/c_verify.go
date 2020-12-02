@@ -33,9 +33,11 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 	for i := len(msgs) - 1; i >= 0; i-- {
 		msg := msgs[i]
 		h, uID, attachments, err := parseVerifMsg(msg)
-		if err == nil {
+		if h != "" && uID != "" {
 			handle = h
 			userID = uID
+		}
+		if err == nil {
 			proofs = append(proofs, attachments...)
 		}
 	}
@@ -189,9 +191,6 @@ func (m *Mux) VDebug(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 var footerRE = regexp.MustCompile(`^(.+) \| (\d{16,18})$`)
 
 func parseVerifMsg(msg *discordgo.Message) (string, string, []string, error) {
-	if len(msg.Attachments) == 0 {
-		return "", "", []string{}, errors.New("No attachments")
-	}
 	if len(msg.Embeds) == 0 {
 		return "", "", []string{}, errors.New("No embeds")
 	}
@@ -214,13 +213,17 @@ func parseVerifMsg(msg *discordgo.Message) (string, string, []string, error) {
 		return "", "", []string{}, fmt.Errorf("Either handle (%s) or userID (%s) was nil", handle, userID)
 	}
 
+	if len(msg.Attachments) == 0 {
+		return handle, userID, []string{}, errors.New("No attachments")
+	}
+
 	attachments := []string{}
 	for _, a := range msg.Attachments {
 		attachments = append(attachments, a.URL)
 	}
 
 	if len(attachments) == 0 {
-		return "", "", []string{}, errors.New("No attachments found in the end")
+		return handle, userID, []string{}, errors.New("No attachments found in the end")
 	}
 
 	return handle, userID, attachments, nil
