@@ -59,6 +59,8 @@ func (m *Mux) Route(pattern, desc string, cb HandlerFunc) (*Route, error) {
 	r.Run = cb
 	m.Routes = append(m.Routes, &r)
 
+	fmt.Printf("Command \"%s%s\" loaded\n", m.Prefix, r.Pattern)
+
 	return &r, nil
 }
 

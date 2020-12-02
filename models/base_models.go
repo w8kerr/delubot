@@ -171,6 +171,19 @@ type DiscordVerificationEvent struct {
 	Processed            bool          `json:"processed" bson:"processed"`
 }
 
+// YoutubeStreamRecord Record of an upcoming or finished Youtube stream, parsed from Fanbox posts
+type YoutubeStreamRecord struct {
+	OID             bson.ObjectId `json:"_id" bson:"_id,omitempty"`
+	PostTitle       string        `json:"post_title" bson:"post_title"`
+	PostLink        string        `json:"post_link" bson:"post_link"`
+	PostPlan        int           `json:"post_plan" bson:"post_plan"`
+	YoutubeID       string        `json:"youtube_id" bson:"youtube_id"`
+	Completed       bool          `json:"completed" bson:"completed"`
+	ScheduledTime   time.Time     `json:"scheduled_time" bson:"scheduled_time"`
+	StreamTitle     string        `json:"stream_title" bson:"stream_title"`
+	StreamThumbnail string        `json:"stream_thumbnail" bson:"stream_thumbnail"`
+}
+
 // BTableOptions holds metadata about how to sort and paginate a query for a
 // Bootstrap-Vue table provider
 type BTableOptions struct {
