@@ -20,11 +20,14 @@ func init() {
 	// all messages received.
 	Session.AddHandler(Router.OnMessageCreate)
 
-	env := os.Getenv("ENV")
+	env := os.Getenv("DELUBOT_ENV")
 
 	// Register the build-in help command.
 	if env == "dev" {
 		// Dev only commands
+		Router.Route("addstream", "Add a stream to the schedule manually ('yy/mm/dd hh:mm <title>')", Router.AddStream)
+		Router.Route("removestream", "Remove a manually added stream", Router.RemoveStream)
+		Router.Route("streams", "Display upcoming streams", Router.Streams)
 	} else {
 		// Remote only commands
 		Router.Route("help", "Display this message.", Router.Help)
@@ -40,7 +43,6 @@ func init() {
 		Router.Route("refreshconfig", "Refresh config from the database", Router.RefreshConfig)
 		Router.Route("v", "Close a modmail and copy the verification to the role sync spreadsheet", Router.Verify)
 		Router.Route("vd", "Debug the verify command", Router.VDebug)
-		Router.Route("streams", "Display upcoming streams", Router.Streams)
 	}
 	// Commands for both remote and dev
 
