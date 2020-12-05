@@ -115,6 +115,9 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 					Title:       schedStream.Title,
 					Description: TimeBefore(schedStream.Time),
 					Color:       10181046,
+					Footer: &discordgo.MessageEmbedFooter{
+						Text: config.PrintTime(schedStream.Time),
+					},
 				}
 				ds.ChannelMessageSendEmbed(dm.ChannelID, embed)
 			}
