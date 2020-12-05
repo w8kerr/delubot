@@ -40,8 +40,8 @@ func init() {
 		Router.Route("refreshconfig", "Refresh config from the database", Router.RefreshConfig)
 		Router.Route("v", "Close a modmail and copy the verification to the role sync spreadsheet", Router.Verify)
 		Router.Route("vd", "Debug the verify command", Router.VDebug)
-		Router.Route("addstream", "Add a stream to the schedule manually ('yy/mm/dd hh:mm <title>')", Router.AddStream)
-		Router.Route("removestream", "Remove a manually added stream", Router.RemoveStream)
+		Router.Route("addstream", "Add a stream to the schedule manually ('yyyy/mm/dd hh:mm <title>')", Router.AddStream)
+		Router.Route("removestream", "Remove a manually added stream ('yyyy/mm/dd hh:mm')", Router.RemoveStream)
 		Router.Route("streams", "Display upcoming streams", Router.Streams)
 	}
 	// Commands for both remote and dev
