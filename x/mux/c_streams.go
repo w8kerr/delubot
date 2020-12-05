@@ -49,7 +49,6 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 				respond("🔺Error getting video info: " + err.Error())
 			}
 			recs[i].ScheduledTime = scheduledTime
-			fmt.Print(snippet.Title, config.PrintTime(scheduledTime))
 			recs[i].StreamTitle = snippet.Title
 			recs[i].StreamThumbnail = snippet.Thumbnails.High.Url
 		}
@@ -97,7 +96,11 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 	}
 
 	if len(schedStreams) > 0 {
-		prerespond("🔺Upcoming scheduled streams:")
+		if len(recs) > 0 {
+			prerespond("🔺Upcoming scheduled streams:")
+		} else {
+			respond("🔺Upcoming scheduled streams:")
+		}
 		for _, schedStream := range schedStreams {
 			collision := false
 			for _, rec := range recs {
@@ -166,7 +169,8 @@ func (m *Mux) AddStream(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 	timeStr := string(match[0][1])
 	titleStr := string(match[0][2])
 
-	t, err := time.Parse("2006/01/02 15:04", timeStr)
+	Loc, _ := time.LoadLocation("Asia/Tokyo")
+	t, err := time.ParseInLocation("06/01/02 15:04", timeStr, Loc)
 	if err != nil {
 		respond("🔺I don't understand that stream time :(\nUsage: `-addstream yyyy/mm/dd hh:mm <title>` (" + err.Error() + ")")
 		return
@@ -203,7 +207,8 @@ func (m *Mux) RemoveStream(ds *discordgo.Session, dm *discordgo.Message, ctx *Co
 
 	timeStr := string(match[0][1])
 
-	t, err := time.Parse("06/01/02 15:04", timeStr)
+	Loc, _ := time.LoadLocation("Asia/Tokyo")
+	t, err := time.ParseInLocation("06/01/02 15:04", timeStr, Loc)
 	if err != nil {
 		respond("🔺I don't understand that stream time :(\nUsage: `-removestream yyyy/mm/dd hh:mm` (" + err.Error() + ")")
 		return
