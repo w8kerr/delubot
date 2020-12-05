@@ -170,7 +170,7 @@ func (m *Mux) AddStream(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 	titleStr := string(match[0][2])
 
 	Loc, _ := time.LoadLocation("Asia/Tokyo")
-	t, err := time.ParseInLocation("06/01/02 15:04", timeStr, Loc)
+	t, err := time.ParseInLocation("2006/01/02 15:04", timeStr, Loc)
 	if err != nil {
 		respond("🔺I don't understand that stream time :(\nUsage: `-addstream yyyy/mm/dd hh:mm <title>` (" + err.Error() + ")")
 		return
@@ -208,7 +208,7 @@ func (m *Mux) RemoveStream(ds *discordgo.Session, dm *discordgo.Message, ctx *Co
 	timeStr := string(match[0][1])
 
 	Loc, _ := time.LoadLocation("Asia/Tokyo")
-	t, err := time.ParseInLocation("06/01/02 15:04", timeStr, Loc)
+	t, err := time.ParseInLocation("2006/01/02 15:04", timeStr, Loc)
 	if err != nil {
 		respond("🔺I don't understand that stream time :(\nUsage: `-removestream yyyy/mm/dd hh:mm` (" + err.Error() + ")")
 		return
