@@ -101,6 +101,7 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 		} else {
 			respond("🔺Upcoming scheduled streams:")
 		}
+		Loc, _ := time.LoadLocation("Asia/Tokyo")
 		for _, schedStream := range schedStreams {
 			collision := false
 			for _, rec := range recs {
@@ -109,6 +110,8 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 					collision = true
 				}
 			}
+
+			schedStream.Time = schedStream.Time.In(Loc)
 
 			if !collision {
 				embed := &discordgo.MessageEmbed{
