@@ -15,6 +15,7 @@ func IsModerator(ds *discordgo.Session, dm *discordgo.MessageCreate) bool {
 	member, err := ds.GuildMember(dm.GuildID, dm.Author.ID)
 	if err != nil {
 		log.Printf("error getting user's member, %s", err)
+		return false
 	}
 
 	guildMods, ok := config.ModeratorRoles[dm.GuildID]
