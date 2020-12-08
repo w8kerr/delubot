@@ -60,6 +60,8 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 
 	proof := strings.Join(proofs, " | ")
 
+	formerRoleError := false
+
 	edit("```🔺Granting roles...```")
 	if plan >= 500 {
 		alphaRole := config.AlphaRole(dm.GuildID)
@@ -71,6 +73,13 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 		if err != nil {
 			edit("```Could not verify, error adding Alpha role, " + err.Error() + "```")
 			return
+		}
+		formerRole := config.FormerRole(dm.GuildID)
+		if formerRole != "" {
+			err = ds.GuildMemberRoleRemove(dm.GuildID, userID, formerRole)
+			if err != nil {
+				formerRoleError = true
+			}
 		}
 	}
 	if plan >= 1500 {
@@ -138,6 +147,9 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 	}
 	if plan >= 10000 {
 		resp += "\nWhale role granted to   " + handle
+	}
+	if formerRoleError {
+		resp += "\n(Failed to remove Former Member role, you'll have to do that yourself)"
 	}
 	resp += "\n\nYou may close the channel now```"
 
