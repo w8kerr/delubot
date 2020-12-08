@@ -32,6 +32,7 @@ func init() {
 		Router.Route("alpharole", "Display or set the configured Alpha role ('clear' to clear).", Router.AlphaRole)
 		Router.Route("specialrole", "Display or set the configured Special role ('clear' to clear).", Router.SpecialRole)
 		Router.Route("whalerole", "Display or set the configured Whale role ('clear' to clear).", Router.WhaleRole)
+		Router.Route("formerrole", "Display or set the configured Former Member role ('clear' to clear).", Router.FormerRole)
 		Router.Route("syncsheet", "Display or set the configured Sync Sheet ID ('clear' to clear).", Router.SyncSheet)
 		Router.Route("rolegrant", "Check, enable ('enable'), or disable ('disable') role granting.", Router.RoleGrant)
 		Router.Route("roleremove", "Check, enable ('enable'), or disable ('disable') role removal.", Router.RoleRemove)

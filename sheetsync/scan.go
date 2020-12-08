@@ -74,6 +74,7 @@ func SyncGuild(svc *sheets.Service, guildID string) {
 	alphaRole := config.AlphaRole(guildID)
 	specialRole := config.SpecialRole(guildID)
 	whaleRole := config.WhaleRole(guildID)
+	formerRole := config.FormerRole(guildID)
 
 	roleGrant := config.RoleGrantIsEnabled(guildID)
 	roleRemove := config.RoleRemoveIsEnabled(guildID)
@@ -98,6 +99,10 @@ func SyncGuild(svc *sheets.Service, guildID string) {
 				*failed = true
 			} else {
 				*updated = true
+				if HasRole(member, formerRole) {
+					err = Session.GuildMemberRoleRemove(guildID, member.User.ID, formerRole)
+					*errors = append(*errors, entry)
+				}
 			}
 		}
 	}
@@ -140,6 +145,10 @@ func SyncGuild(svc *sheets.Service, guildID string) {
 				*failed = true
 			} else {
 				*updated = true
+				if !HasRole(member, formerRole) {
+					err = Session.GuildMemberRoleAdd(guildID, member.User.ID, formerRole)
+					*errors = append(*errors, entry)
+				}
 			}
 		}
 	}

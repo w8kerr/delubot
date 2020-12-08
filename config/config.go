@@ -35,6 +35,7 @@ type RoleConfig struct {
 	Alpha   string `json:"alpha" bson:"alpha"`
 	Special string `json:"special" bson:"special"`
 	Whale   string `json:"whale" bson:"whale"`
+	Former  string `json:"former" bson:"former"`
 }
 
 var GrantRoles = map[string]RoleConfig{
@@ -42,6 +43,7 @@ var GrantRoles = map[string]RoleConfig{
 		Alpha:   "760705266953355295",
 		Special: "783112023570513970",
 		Whale:   "761570574794489886",
+		Former:  "782479385185615953",
 	},
 }
 
@@ -205,6 +207,17 @@ func WhaleRole(guildID string) string {
 	return guildRoles.Whale
 }
 
+// FormerRole get the designated former member role for the given guild
+func FormerRole(guildID string) string {
+	guildRoles, ok := GrantRoles[guildID]
+	if !ok {
+		log.Printf("Could not find guild roles, %s", guildID)
+		return ""
+	}
+
+	return guildRoles.Former
+}
+
 // ModmailCategory get the designated modmail category ID for the given guild
 func ModmailCategory(guildID string) string {
 	catID, ok := ModmailCategories[guildID]
@@ -305,6 +318,29 @@ func SetWhaleRole(guildID, roleID string) error {
 	} else {
 		GrantRoles[guildID] = RoleConfig{
 			Whale: roleID,
+		}
+	}
+
+	return nil
+}
+
+func SetFormerRole(guildID, roleID string) error {
+	key := fmt.Sprintf("grant_roles.%s.former", guildID)
+	update := bson.M{
+		key: roleID,
+	}
+
+	err := UpdateConfig(update)
+	if err != nil {
+		return err
+	}
+
+	if v, ok := GrantRoles[guildID]; ok {
+		v.Former = roleID
+		GrantRoles[guildID] = v
+	} else {
+		GrantRoles[guildID] = RoleConfig{
+			Former: roleID,
 		}
 	}
 

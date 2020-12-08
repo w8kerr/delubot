@@ -366,3 +366,61 @@ func (m *Mux) WhaleRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 
 	respond("No Whale role is configured")
 }
+
+func (m *Mux) FormerRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
+	respond := GetResponder(ds, dm)
+
+	roles, err := ds.GuildRoles(dm.GuildID)
+	if err != nil {
+		respond(err.Error())
+		return
+	}
+
+	ctx.Content = strings.TrimPrefix(ctx.Content, "formerrole")
+	ctx.Content = strings.TrimSpace(ctx.Content)
+	if ctx.Content == "clear" {
+		err = config.SetFormerRole(dm.GuildID, "")
+		if err != nil {
+			respond(fmt.Sprintf("Failed to clear former member role, %s", err))
+			return
+		}
+
+		respond("Former role cleared")
+		return
+	} else if ctx.Content != "" {
+		roleID := ""
+		roleName := ""
+		for _, role := range roles {
+			if role.ID == ctx.Content || role.Name == ctx.Content {
+				roleID = role.ID
+				roleName = role.Name
+				break
+			}
+		}
+
+		if roleID == "" {
+			respond(fmt.Sprintf("No role found matching ID or Name `%s`", ctx.Content))
+			return
+		}
+
+		err = config.SetWhaleRole(dm.GuildID, roleID)
+		if err != nil {
+			respond(fmt.Sprintf("Failed to set former role, %s", err))
+			return
+		}
+
+		respond(fmt.Sprintf("Former role set to %s (`%s`)", roleName, roleID))
+		return
+	}
+
+	formerRoleID := config.FormerRole(dm.GuildID)
+	for _, role := range roles {
+		if role.ID == formerRoleID {
+			resp := fmt.Sprintf("Former role: %s (`%s`)", role.Name, role.ID)
+			respond(resp)
+			return
+		}
+	}
+
+	respond("No Former Member role is configured")
+}
