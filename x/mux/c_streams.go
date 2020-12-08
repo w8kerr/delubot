@@ -17,6 +17,11 @@ import (
 	"github.com/w8kerr/delubot/youtubesvc"
 )
 
+func (m *Mux) Stream(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
+	respond := GetResponder(ds, dm)
+	respond("🔺No fuck you it's supposed to be 'streams' >:l")
+}
+
 func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	prerespond := GetResponder(ds, dm)
 	msg := prerespond("🔺Looking up stream information...")

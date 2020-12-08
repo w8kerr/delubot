@@ -44,6 +44,7 @@ func init() {
 		Router.Route("addstream", "Add a stream to the schedule manually ('yyyy/mm/dd hh:mm <title>')", Router.AddStream)
 		Router.Route("removestream", "Remove a manually added stream ('yyyy/mm/dd hh:mm')", Router.RemoveStream)
 		Router.Route("streams", "Display upcoming streams", Router.Streams)
+		Router.Route("stream", "Display upcoming streams", Router.Stream)
 	}
 	// Commands for both remote and dev
 
