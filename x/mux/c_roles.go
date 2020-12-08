@@ -403,7 +403,7 @@ func (m *Mux) FormerRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Cont
 			return
 		}
 
-		err = config.SetWhaleRole(dm.GuildID, roleID)
+		err = config.SetFormerRole(dm.GuildID, roleID)
 		if err != nil {
 			respond(fmt.Sprintf("Failed to set former role, %s", err))
 			return
