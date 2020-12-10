@@ -19,6 +19,8 @@ func init() {
 	// Register the mux OnMessageCreate handler that listens for and processes
 	// all messages received.
 	Session.AddHandler(Router.OnMessageCreate)
+	Session.AddHandler(Router.AddReaction)
+	Session.AddHandler(Router.RemoveReaction)
 
 	env := os.Getenv("DELUBOT_ENV")
 
@@ -46,7 +48,8 @@ func init() {
 		Router.Route("streams", "Display upcoming streams", Router.Streams)
 		Router.Route("stream", "Display upcoming streams", Router.Stream)
 		Router.Route("avatar", "Set the bot's avatar", Router.Avatar)
-		// Router.Route("8ball", "Receive DeluBot's guidance", Router.EightBall)
+		Router.Route("proposal", "Create a sign-off sheet following the message.", Router.Proposal)
+		Router.Route("8ball", "Receive DeluBot's guidance", Router.EightBall)
 	}
 	// Commands for both remote and dev
 

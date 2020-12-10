@@ -66,6 +66,8 @@ var GoogleCredentials bson.M
 
 var Loc *time.Location
 
+var Proposals = make(map[string]string)
+
 type BotConfig struct {
 	ModeratorRoles    map[string][]string   `json:"moderator_roles" bson:"moderator_roles"`
 	GrantRoles        map[string]RoleConfig `json:"grant_roles" bson:"grant_roles"`

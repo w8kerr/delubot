@@ -262,7 +262,7 @@ func ReadAllManual(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) ([]
 		if plan == 0 {
 			plan = 500
 		}
-		fmt.Println("READ MANUAL", username, disc, plan)
+
 		rowIndex := i + 7
 		rr := RowRange{
 			PageID:   sheet.Properties.SheetId,

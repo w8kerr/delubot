@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -26,8 +25,6 @@ func GetAllMembers(ds *discordgo.Session, guildID string) ([]*discordgo.Member, 
 		}
 
 		after = memberChunk[len(memberChunk)-1].User.ID
-
-		fmt.Println("MEMBERCHUNK", len(memberChunk))
 
 		if len(memberChunk) < limit {
 			lastMember = true

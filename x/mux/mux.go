@@ -115,8 +115,11 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 	}
 
 	// Ignore all messages by non-moderators
-	fmt.Println("CHECK MODERATOR", IsModerator(ds, mc))
-	fmt.Println(mc.Author.Username, ":", mc.Content)
+	msg := mc.Author.Username + ": " + mc.Content
+	if IsModerator(ds, mc) {
+		msg = "[M] " + msg
+	}
+	fmt.Println(msg)
 	if !IsModerator(ds, mc) {
 		return
 	}
@@ -223,4 +226,24 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		m.Default.Run(ds, mc.Message, ctx)
 	}
 
+}
+
+func (m *Mux) AddReaction(ds *discordgo.Session, ra *discordgo.MessageReactionAdd) {
+	// Don't react to the bot's own reactions
+	if ra.UserID == ds.State.User.ID {
+		return
+	}
+	if channelID, ok := config.Proposals[ra.MessageID]; ok {
+		m.UpdateProposal(ds, ra.GuildID, channelID, ra.MessageID)
+	}
+}
+
+func (m *Mux) RemoveReaction(ds *discordgo.Session, rr *discordgo.MessageReactionRemove) {
+	// Don't react to the bot's own reactions
+	if rr.UserID == ds.State.User.ID {
+		return
+	}
+	if channelID, ok := config.Proposals[rr.MessageID]; ok {
+		m.UpdateProposal(ds, rr.GuildID, channelID, rr.MessageID)
+	}
 }
