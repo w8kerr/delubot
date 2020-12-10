@@ -340,7 +340,7 @@ func UpdateFormatting(svc *sheets.Service, sheetID string, reqs []*sheets.Reques
 func MapRows(rows []RoleRow) map[string]RoleRow {
 	m := make(map[string]RoleRow)
 	for _, row := range rows {
-		m[row.Handle()] = row
+		m[row.UserID] = row
 	}
 
 	return m
@@ -399,5 +399,17 @@ func AddManualVerification(svc *sheets.Service, sheetID, handle, userID, proof s
 		return err
 	}
 
+	return nil
+}
+
+func UpdateHandle(svc *sheets.Service, sheetID string, page *sheets.Sheet, row RoleRow, newHandle string) error {
+	r := fmt.Sprintf("'%s'!F%d:F%d", page.Properties.Title, row.Row, row.Row)
+
+	vr := &sheets.ValueRange{}
+	vr.Values = append(vr.Values, []interface{}{newHandle})
+	_, err := svc.Spreadsheets.Values.Update(sheetID, r, vr).ValueInputOption("RAW").Do()
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -247,9 +247,10 @@ func DoSyncGuild(svc *sheets.Service, guildID string, sheetID string, page *shee
 
 	for _, member := range members {
 		handle := member.User.Username + "#" + member.User.Discriminator
-		entry, hasEntry := entryMap[handle]
+		entry, hasEntry := entryMap[member.User.ID]
+
 		if hasEntry {
-			ban, hasBan := banMap[handle]
+			ban, hasBan := banMap[member.User.ID]
 			if hasBan {
 				updated := false
 				failed := false
@@ -301,6 +302,15 @@ func DoSyncGuild(svc *sheets.Service, guildID string, sheetID string, page *shee
 					if entry.Plan >= 10000 {
 						gaveWhale = append(gaveWhale, entry)
 					}
+				}
+			}
+
+			if entry.Handle() != handle {
+				err = UpdateHandle(svc, sheetID, page, entry, handle)
+				if err != nil {
+					log.Printf("ERROR: Failed to update handle (%s)\n", member.User.ID)
+				} else {
+					log.Printf("Update handle from '%s' to '%s' (%s)\n", entry.Handle(), handle, member.User.ID)
 				}
 			}
 		} else {
