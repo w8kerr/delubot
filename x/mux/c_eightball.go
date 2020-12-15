@@ -12,12 +12,13 @@ import (
 func (m *Mux) EightBall(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	prerespond := GetResponder(ds, dm)
 
-	emoji, err := ds.State.Emoji(dm.GuildID, "788243303816364062")
-	if err != nil {
-		prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor (" + err.Error() + ")"))
-		return
-	}
-	prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor " + emoji.MessageFormat()))
+	// emoji, err := ds.State.Emoji(dm.GuildID, "788243303816364062")
+	// if err != nil {
+	// 	prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor (" + err.Error() + ")"))
+	// 	return
+	// }
+	notAmusedTea := "<:notamusedtea:788243303816364062>"
+	prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor " + notAmusedTea))
 	return
 
 	ctx.Content = strings.TrimPrefix(ctx.Content, "avatar")
