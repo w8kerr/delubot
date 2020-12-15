@@ -17,7 +17,8 @@ func (m *Mux) EightBall(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 	// 	prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor (" + err.Error() + ")"))
 	// 	return
 	// }
-	notAmusedTea := "<:notamusedtea:788243303816364062>"
+
+	notAmusedTea := "<:notamusedtea:774201181425238036>"
 	prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor " + notAmusedTea))
 	return
 
