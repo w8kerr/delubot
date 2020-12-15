@@ -12,6 +12,9 @@ import (
 func (m *Mux) EightBall(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	prerespond := GetResponder(ds, dm)
 
+	prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor :notamusedtea:"))
+	return
+
 	ctx.Content = strings.TrimPrefix(ctx.Content, "avatar")
 	ctx.Content = strings.TrimSpace(ctx.Content)
 	if ctx.Content == "" {
