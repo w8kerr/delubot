@@ -12,7 +12,8 @@ import (
 func (m *Mux) EightBall(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	prerespond := GetResponder(ds, dm)
 
-	prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor :notamusedtea:"))
+	emoji, _ := ds.State.Emoji(dm.GuildID, "notamusedtea")
+	prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor " + emoji.MessageFormat()))
 	return
 
 	ctx.Content = strings.TrimPrefix(ctx.Content, "avatar")
