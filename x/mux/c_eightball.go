@@ -17,7 +17,7 @@ func (m *Mux) EightBall(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 		prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor (" + err.Error() + ")"))
 		return
 	}
-	prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor " + emoji.MessageFormat()))s
+	prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor " + emoji.MessageFormat()))
 	return
 
 	ctx.Content = strings.TrimPrefix(ctx.Content, "avatar")
