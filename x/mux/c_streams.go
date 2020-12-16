@@ -17,6 +17,15 @@ import (
 	"github.com/w8kerr/delubot/youtubesvc"
 )
 
+type EmbedToUpdate struct {
+	ChannelID     string
+	MessageID     string
+	YoutubeRecord *models.YoutubeStreamRecord
+	ManualStream  *ManualStream
+}
+
+var EmbedsToUpdate []EmbedToUpdate
+
 func (m *Mux) Stream(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	respond := GetResponder(ds, dm)
 	respond("🔺No fuck you it's supposed to be 'streams' >:l")
@@ -26,6 +35,8 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 	prerespond := GetResponder(ds, dm)
 	msg := prerespond("🔺Looking up stream information...")
 	respond := GetEditor(ds, msg)
+
+	EmbedsToUpdate = []EmbedToUpdate{}
 
 	session := mongo.MDB.Clone()
 	defer session.Close()
@@ -62,35 +73,21 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 			return recs[a].ScheduledTime.Before(recs[b].ScheduledTime)
 		})
 
-		embeds := []*discordgo.MessageEmbed{}
 		for _, rec := range recs {
-			embed := &discordgo.MessageEmbed{
-				Title:       rec.StreamTitle,
-				Description: fmt.Sprintf("%s\nSee %s for link", TimeBefore(rec.ScheduledTime), rec.PostLink),
-				Footer: &discordgo.MessageEmbedFooter{
-					Text: fmt.Sprintf("\nRestricted to ¥%d plan members", rec.PostPlan),
-				},
-				Thumbnail: &discordgo.MessageEmbedThumbnail{
-					URL: rec.StreamThumbnail,
-				},
-				Color: 3066993,
-			}
-			embeds = append(embeds, embed)
-			// resp := fmt.Sprintf("> **%s**", rec.StreamTitle)
-			// resp += fmt.Sprintf("\n%s", TimeBefore(rec.ScheduledTime))
-			// resp += fmt.Sprintf("\nSee %s for link", rec.PostLink)
-			// if rec.PostPlan > 500 {
-			// 	resp += fmt.Sprintf("\n`Restricted to ¥%d plan members`", rec.PostPlan)
-			// }
+			embed := LinkedEmbed(rec)
 
-			// resps = append(resps, resp)
+			msg, err := ds.ChannelMessageSendEmbed(dm.ChannelID, embed)
+			if err == nil {
+				EmbedsToUpdate = append(EmbedsToUpdate, EmbedToUpdate{
+					ChannelID:     dm.ChannelID,
+					MessageID:     msg.ID,
+					YoutubeRecord: &rec,
+				})
+			}
 		}
 
 		final := "🔺Upcoming streams:"
 		respond(final)
-		for _, embed := range embeds {
-			ds.ChannelMessageSendEmbed(dm.ChannelID, embed)
-		}
 	}
 
 	schedCol := db.C("scheduled_streams")
@@ -119,15 +116,15 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 			schedStream.Time = schedStream.Time.In(Loc)
 
 			if !collision {
-				embed := &discordgo.MessageEmbed{
-					Title:       schedStream.Title,
-					Description: TimeBefore(schedStream.Time),
-					Color:       10181046,
-					Footer: &discordgo.MessageEmbedFooter{
-						Text: config.PrintTime(schedStream.Time),
-					},
+				embed := ScheduledEmbed(schedStream)
+				msg, err := ds.ChannelMessageSendEmbed(dm.ChannelID, embed)
+				if err == nil {
+					EmbedsToUpdate = append(EmbedsToUpdate, EmbedToUpdate{
+						ChannelID:    dm.ChannelID,
+						MessageID:    msg.ID,
+						ManualStream: &schedStream,
+					})
 				}
-				ds.ChannelMessageSendEmbed(dm.ChannelID, embed)
 			}
 		}
 	}
@@ -136,6 +133,35 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 		respond("🔺No upcoming streams found :(")
 		return
 	}
+}
+
+func ScheduledEmbed(schedStream ManualStream) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Title:       schedStream.Title,
+		Description: TimeBefore(schedStream.Time),
+		Color:       10181046,
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: config.PrintTime(schedStream.Time),
+		},
+	}
+
+	return embed
+}
+
+func LinkedEmbed(rec models.YoutubeStreamRecord) *discordgo.MessageEmbed {
+	embed := &discordgo.MessageEmbed{
+		Title:       rec.StreamTitle,
+		Description: fmt.Sprintf("%s\nSee %s for link", TimeBefore(rec.ScheduledTime), rec.PostLink),
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: fmt.Sprintf("\nRestricted to ¥%d plan members", rec.PostPlan),
+		},
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: rec.StreamThumbnail,
+		},
+		Color: 3066993,
+	}
+
+	return embed
 }
 
 func TimeBefore(t time.Time) string {
@@ -240,5 +266,80 @@ func (m *Mux) RemoveStream(ds *discordgo.Session, dm *discordgo.Message, ctx *Co
 	} else {
 		schedCol.Remove(bson.M{"time": t})
 		respond("🔺Stream removed")
+	}
+}
+
+func (m *Mux) InitScanForUpdates(ds *discordgo.Session) {
+	sleepDuration := 1 * time.Minute
+	for {
+		time.Sleep(sleepDuration)
+		m.ScanForUpdates(ds)
+	}
+}
+
+func (m *Mux) ScanForUpdates(ds *discordgo.Session) {
+	session := mongo.MDB.Clone()
+	defer session.Close()
+	session.SetMode(mgo.Strong, false)
+	c := context.Background()
+	c = context.WithValue(c, "mgo", session)
+	db := session.DB(mongo.DB_NAME)
+
+	ytCol := db.C("youtube_stream_records")
+	recs := []models.YoutubeStreamRecord{}
+	err := ytCol.Find(bson.M{"completed": false}).All(&recs)
+	if err != nil {
+		fmt.Println("Failed to look up stream records for update, " + err.Error())
+		return
+	}
+
+	if len(recs) > 0 {
+		ytSvc, err := youtubesvc.NewYoutubeService(c)
+		if err != nil {
+			fmt.Println("Failed to connect to Youtube, " + err.Error())
+			return
+		}
+		for i, rec := range recs {
+			scheduledTime, _, snippet, err := ytSvc.GetStreamInfo(rec.YoutubeID)
+			if err != nil {
+				fmt.Println("Failed to get video info, " + err.Error())
+				return
+			}
+			recs[i].ScheduledTime = scheduledTime
+			recs[i].StreamTitle = snippet.Title
+			recs[i].StreamThumbnail = snippet.Thumbnails.High.Url
+		}
+
+		sort.Slice(recs, func(a int, b int) bool {
+			return recs[a].ScheduledTime.Before(recs[b].ScheduledTime)
+		})
+	}
+
+	for _, etu := range EmbedsToUpdate {
+		if etu.YoutubeRecord != nil {
+
+		} else if etu.ManualStream != nil {
+			var matchedRec *models.YoutubeStreamRecord
+			for _, rec := range recs {
+				diff := etu.ManualStream.Time.Sub(rec.ScheduledTime).Hours()
+				if diff > -1.1 && diff < 1.1 {
+					matchedRec = &rec
+				}
+			}
+
+			if matchedRec != nil {
+				embed := LinkedEmbed(*matchedRec)
+				_, err := ds.ChannelMessageEditEmbed(etu.ChannelID, etu.MessageID, embed)
+				if err != nil {
+					fmt.Println("Failed to update embed, " + err.Error())
+				}
+			} else {
+				embed := ScheduledEmbed(*etu.ManualStream)
+				_, err := ds.ChannelMessageEditEmbed(etu.ChannelID, etu.MessageID, embed)
+				if err != nil {
+					fmt.Println("Failed to update embed, " + err.Error())
+				}
+			}
+		}
 	}
 }
