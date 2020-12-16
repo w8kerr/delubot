@@ -143,6 +143,7 @@ func ScheduledEmbed(schedStream ManualStream) *discordgo.MessageEmbed {
 		Footer: &discordgo.MessageEmbedFooter{
 			Text: config.PrintTime(schedStream.Time),
 		},
+		Timestamp: "Updated " + config.PrintTime(time.Now()),
 	}
 
 	return embed
@@ -158,7 +159,8 @@ func LinkedEmbed(rec models.YoutubeStreamRecord) *discordgo.MessageEmbed {
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: rec.StreamThumbnail,
 		},
-		Color: 3066993,
+		Color:     3066993,
+		Timestamp: "Updated " + config.PrintTime(time.Now()),
 	}
 
 	return embed
@@ -322,9 +324,14 @@ func (m *Mux) ScanForUpdates(ds *discordgo.Session) {
 	}
 
 	fmt.Println("EMBEDS TO UPDATE", len(EmbedsToUpdate))
-	for _, etu := range EmbedsToUpdate {
+	for i := range EmbedsToUpdate {
+		etu := EmbedsToUpdate[i]
 		if etu.YoutubeRecord != nil {
-
+			embed := LinkedEmbed(*etu.YoutubeRecord)
+			_, err := ds.ChannelMessageEditEmbed(etu.ChannelID, etu.MessageID, embed)
+			if err != nil {
+				fmt.Println("Failed to update embed, " + err.Error())
+			}
 		} else if etu.ManualStream != nil {
 			var matchedRec *models.YoutubeStreamRecord
 			for _, rec := range recs {
