@@ -278,6 +278,11 @@ func (m *Mux) InitScanForUpdates(ds *discordgo.Session) {
 }
 
 func (m *Mux) ScanForUpdates(ds *discordgo.Session) {
+	fmt.Println("SCAN FOR UPDATES")
+	if len(EmbedsToUpdate) == 0 {
+		return
+	}
+
 	session := mongo.MDB.Clone()
 	defer session.Close()
 	session.SetMode(mgo.Strong, false)
@@ -293,6 +298,7 @@ func (m *Mux) ScanForUpdates(ds *discordgo.Session) {
 		return
 	}
 
+	fmt.Println("YOUTUBE STREAM RECORDS", len(recs))
 	if len(recs) > 0 {
 		ytSvc, err := youtubesvc.NewYoutubeService(c)
 		if err != nil {
@@ -315,6 +321,7 @@ func (m *Mux) ScanForUpdates(ds *discordgo.Session) {
 		})
 	}
 
+	fmt.Println("EMBEDS TO UPDATE", len(EmbedsToUpdate))
 	for _, etu := range EmbedsToUpdate {
 		if etu.YoutubeRecord != nil {
 
