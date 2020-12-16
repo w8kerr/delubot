@@ -18,10 +18,9 @@ import (
 )
 
 type EmbedToUpdate struct {
-	ChannelID     string
-	MessageID     string
-	YoutubeRecord *models.YoutubeStreamRecord
-	ManualStream  *ManualStream
+	ChannelID string
+	MessageID string
+	Time      time.Time
 }
 
 var EmbedsToUpdate []EmbedToUpdate
@@ -68,64 +67,19 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 			recs[i].StreamTitle = snippet.Title
 			recs[i].StreamThumbnail = snippet.Thumbnails.High.Url
 		}
-
-		sort.Slice(recs, func(a int, b int) bool {
-			return recs[a].ScheduledTime.Before(recs[b].ScheduledTime)
-		})
-
-		for i, rec := range recs {
-			embed := LinkedEmbed(rec)
-
-			msg, err := ds.ChannelMessageSendEmbed(dm.ChannelID, embed)
-			if err == nil {
-				EmbedsToUpdate = append(EmbedsToUpdate, EmbedToUpdate{
-					ChannelID:     dm.ChannelID,
-					MessageID:     msg.ID,
-					YoutubeRecord: &recs[i],
-				})
-			}
-		}
-
-		final := "🔺Upcoming streams:"
-		respond(final)
 	}
 
 	schedCol := db.C("scheduled_streams")
 	schedStreams := []ManualStream{}
 	err = schedCol.Find(bson.M{"time": bson.M{"$gt": time.Now()}}).Sort("time").All(&schedStreams)
 	if err != nil && err != mgo.ErrNotFound {
-		respond("Failed to get manually scheduled streams")
+		respond("🔺Failed to get manually scheduled streams: " + err.Error())
 	}
 
 	if len(schedStreams) > 0 {
-		if len(recs) > 0 {
-			prerespond("🔺Upcoming scheduled streams:")
-		} else {
-			respond("🔺Upcoming scheduled streams:")
-		}
 		Loc, _ := time.LoadLocation("Asia/Tokyo")
-		for i, schedStream := range schedStreams {
-			collision := false
-			for _, rec := range recs {
-				diff := schedStream.Time.Sub(rec.ScheduledTime).Hours()
-				if diff > -1.1 && diff < 1.1 {
-					collision = true
-				}
-			}
-
+		for _, schedStream := range schedStreams {
 			schedStream.Time = schedStream.Time.In(Loc)
-
-			if !collision {
-				embed := ScheduledEmbed(schedStream)
-				msg, err := ds.ChannelMessageSendEmbed(dm.ChannelID, embed)
-				if err == nil {
-					EmbedsToUpdate = append(EmbedsToUpdate, EmbedToUpdate{
-						ChannelID:    dm.ChannelID,
-						MessageID:    msg.ID,
-						ManualStream: &schedStreams[i],
-					})
-				}
-			}
 		}
 	}
 
@@ -133,35 +87,62 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 		respond("🔺No upcoming streams found :(")
 		return
 	}
-}
 
-func ScheduledEmbed(schedStream ManualStream) *discordgo.MessageEmbed {
-	embed := &discordgo.MessageEmbed{
-		Title:       schedStream.Title,
-		Description: TimeBefore(schedStream.Time),
-		Color:       10181046,
-		Footer: &discordgo.MessageEmbedFooter{
-			Text: config.PrintTime(schedStream.Time),
-		},
-		// Timestamp: "Updated " + config.PrintTime(time.Now()),
+	embed := StreamsEmbed(schedStreams, recs)
+
+	msg, err = ds.ChannelMessageEditEmbed(dm.ChannelID, msg.ID, embed)
+	if err == nil {
+		EmbedsToUpdate = append(EmbedsToUpdate, EmbedToUpdate{
+			ChannelID: dm.ChannelID,
+			MessageID: msg.ID,
+			Time:      time.Now(),
+		})
 	}
-
-	return embed
 }
 
-func LinkedEmbed(rec models.YoutubeStreamRecord) *discordgo.MessageEmbed {
+func StreamsEmbed(mans []ManualStream, recs []models.YoutubeStreamRecord) *discordgo.MessageEmbed {
 	embed := &discordgo.MessageEmbed{
-		Title:       rec.StreamTitle,
-		Description: fmt.Sprintf("%s\nSee %s for link", TimeBefore(rec.ScheduledTime), rec.PostLink),
-		Footer: &discordgo.MessageEmbedFooter{
-			Text: fmt.Sprintf("\nRestricted to ¥%d plan members", rec.PostPlan),
-		},
-		Thumbnail: &discordgo.MessageEmbedThumbnail{
-			URL: rec.StreamThumbnail,
-		},
 		Color: 3066993,
-		// Timestamp: "Updated " + config.PrintTime(time.Now()),
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: "Updated",
+		},
+		Timestamp: time.Now().Format(time.RFC3339),
 	}
+
+	sort.Slice(recs, func(a int, b int) bool {
+		return recs[a].ScheduledTime.Before(recs[b].ScheduledTime)
+	})
+
+	fields := []*discordgo.MessageEmbedField{}
+
+	for _, rec := range recs {
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name:  rec.StreamTitle,
+			Value: fmt.Sprintf("[See Fanbox for link](%s)\nRestricted to ¥%d plan members\n%s\n%s", rec.PostLink, rec.PostPlan, TimeBefore(rec.ScheduledTime), config.PrintTime(rec.ScheduledTime)),
+		})
+	}
+
+	for _, man := range mans {
+		if man.ReplacedBy(recs) {
+			continue
+		}
+
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name:  man.Title,
+			Value: fmt.Sprintf("%s\n%s", TimeBefore(man.Time), config.PrintTime(man.Time)),
+		})
+	}
+
+	if len(recs) > 0 {
+		embed.Title = "Upcoming streams:"
+		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
+			URL: recs[0].StreamThumbnail,
+		}
+	} else {
+		embed.Title = "Upcoming scheduled streams:"
+	}
+
+	embed.Fields = fields
 
 	return embed
 }
@@ -190,6 +171,17 @@ func TimeBefore(t time.Time) string {
 type ManualStream struct {
 	Time  time.Time `json:"time" bson:"time"`
 	Title string    `json:"title" bson:"title"`
+}
+
+func (ms *ManualStream) ReplacedBy(recs []models.YoutubeStreamRecord) bool {
+	for _, rec := range recs {
+		diff := ms.Time.Sub(rec.ScheduledTime).Hours()
+		if diff > -1.1 && diff < 1.1 {
+			return true
+		}
+	}
+
+	return false
 }
 
 var addStreamRE = regexp.MustCompile(`(\d\d\d\d\/\d\d\/\d\d \d\d:\d\d) (.+)`)
@@ -272,7 +264,7 @@ func (m *Mux) RemoveStream(ds *discordgo.Session, dm *discordgo.Message, ctx *Co
 }
 
 func (m *Mux) InitScanForUpdates(ds *discordgo.Session) {
-	sleepDuration := 1 * time.Minute
+	sleepDuration := 5 * time.Second
 	for {
 		time.Sleep(sleepDuration)
 		m.ScanForUpdates(ds)
@@ -281,6 +273,13 @@ func (m *Mux) InitScanForUpdates(ds *discordgo.Session) {
 
 func (m *Mux) ScanForUpdates(ds *discordgo.Session) {
 	fmt.Println("SCAN FOR UPDATES")
+	pruned := []EmbedToUpdate{}
+	for _, etu := range EmbedsToUpdate {
+		if etu.Time.Add(24 * time.Hour).After(time.Now()) {
+			pruned = append(pruned, etu)
+		}
+	}
+	EmbedsToUpdate = pruned
 	if len(EmbedsToUpdate) == 0 {
 		return
 	}
@@ -296,63 +295,58 @@ func (m *Mux) ScanForUpdates(ds *discordgo.Session) {
 	recs := []models.YoutubeStreamRecord{}
 	err := ytCol.Find(bson.M{"completed": false}).All(&recs)
 	if err != nil {
-		fmt.Println("Failed to look up stream records for update, " + err.Error())
+		fmt.Println("🔺Could not get stream information, " + err.Error())
 		return
 	}
 
-	fmt.Println("YOUTUBE STREAM RECORDS", len(recs))
 	if len(recs) > 0 {
 		ytSvc, err := youtubesvc.NewYoutubeService(c)
 		if err != nil {
-			fmt.Println("Failed to connect to Youtube, " + err.Error())
+			fmt.Println("🔺Could not connect to Youtube")
 			return
 		}
 		for i, rec := range recs {
 			scheduledTime, _, snippet, err := ytSvc.GetStreamInfo(rec.YoutubeID)
 			if err != nil {
-				fmt.Println("Failed to get video info, " + err.Error())
-				return
+				fmt.Println("🔺Error getting video info: " + err.Error())
 			}
 			recs[i].ScheduledTime = scheduledTime
 			recs[i].StreamTitle = snippet.Title
 			recs[i].StreamThumbnail = snippet.Thumbnails.High.Url
 		}
-
-		sort.Slice(recs, func(a int, b int) bool {
-			return recs[a].ScheduledTime.Before(recs[b].ScheduledTime)
-		})
 	}
 
-	fmt.Println("EMBEDS TO UPDATE", len(EmbedsToUpdate))
-	for i := range EmbedsToUpdate {
-		if EmbedsToUpdate[i].YoutubeRecord != nil {
-			embed := LinkedEmbed(*EmbedsToUpdate[i].YoutubeRecord)
-			_, err := ds.ChannelMessageEditEmbed(EmbedsToUpdate[i].ChannelID, EmbedsToUpdate[i].MessageID, embed)
-			if err != nil {
-				fmt.Println("Failed to update embed, " + err.Error())
-			}
-		} else if EmbedsToUpdate[i].ManualStream != nil {
-			var matchedRec *models.YoutubeStreamRecord
-			for _, rec := range recs {
-				diff := EmbedsToUpdate[i].ManualStream.Time.Sub(rec.ScheduledTime).Hours()
-				if diff > -1.1 && diff < 1.1 {
-					matchedRec = &rec
-				}
-			}
+	schedCol := db.C("scheduled_streams")
+	schedStreams := []ManualStream{}
+	err = schedCol.Find(bson.M{"time": bson.M{"$gt": time.Now()}}).Sort("time").All(&schedStreams)
+	if err != nil && err != mgo.ErrNotFound {
+		fmt.Println("Failed to get manually scheduled streams: " + err.Error())
+	}
 
-			if matchedRec != nil {
-				embed := LinkedEmbed(*matchedRec)
-				_, err := ds.ChannelMessageEditEmbed(EmbedsToUpdate[i].ChannelID, EmbedsToUpdate[i].MessageID, embed)
-				if err != nil {
-					fmt.Println("Failed to update embed, " + err.Error())
-				}
-			} else {
-				embed := ScheduledEmbed(*EmbedsToUpdate[i].ManualStream)
-				_, err := ds.ChannelMessageEditEmbed(EmbedsToUpdate[i].ChannelID, EmbedsToUpdate[i].MessageID, embed)
-				if err != nil {
-					fmt.Println("Failed to update embed, " + err.Error())
-				}
-			}
+	if len(schedStreams) > 0 {
+		Loc, _ := time.LoadLocation("Asia/Tokyo")
+		for _, schedStream := range schedStreams {
+			schedStream.Time = schedStream.Time.In(Loc)
 		}
 	}
+
+	if len(recs) == 0 && len(schedStreams) == 0 {
+		for _, etu := range EmbedsToUpdate {
+			ds.ChannelMessageEdit(etu.ChannelID, etu.MessageID, "🔺No upcoming streams found :(")
+		}
+		EmbedsToUpdate = []EmbedToUpdate{}
+		return
+	}
+
+	embed := StreamsEmbed(schedStreams, recs)
+	succeeded := []EmbedToUpdate{}
+	for _, etu := range EmbedsToUpdate {
+		_, err = ds.ChannelMessageEditEmbed(etu.ChannelID, etu.MessageID, embed)
+		if err != nil {
+			fmt.Println("Failed to update previous streams embed: " + err.Error())
+		} else {
+			succeeded = append(succeeded, etu)
+		}
+	}
+	EmbedsToUpdate = succeeded
 }
