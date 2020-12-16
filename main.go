@@ -95,6 +95,8 @@ func main() {
 	sheetsync.Init(Session)
 	go sheetsync.Sweeper()
 
+	go Router.InitScanForUpdates(Session)
+
 	// Run the command muxer
 	// Session.AddHandler(Router.OnMessageCreate)
 	// Router.Route("help", "Display this message.", Router.Help)
