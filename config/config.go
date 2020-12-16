@@ -413,6 +413,7 @@ func SetEightBallEnabled(enabled bool) error {
 	}
 
 	EightBallEnabled = enabled
+	return nil
 }
 
 func ParseTime(raw string) time.Time {
