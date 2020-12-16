@@ -119,7 +119,7 @@ func StreamsEmbed(mans []ManualStream, recs []models.YoutubeStreamRecord) *disco
 	for _, rec := range recs {
 		rec.ScheduledTime = rec.ScheduledTime.In(Loc)
 		fields = append(fields, &discordgo.MessageEmbedField{
-			Name:  rec.StreamTitle,
+			Name:  "🔺" + rec.StreamTitle,
 			Value: fmt.Sprintf("[See Fanbox for link](%s)\nRestricted to ¥%d plan members\n%s\n%s", rec.PostLink, rec.PostPlan, TimeBefore(rec.ScheduledTime), config.PrintTime(rec.ScheduledTime)),
 		})
 	}
@@ -131,7 +131,7 @@ func StreamsEmbed(mans []ManualStream, recs []models.YoutubeStreamRecord) *disco
 
 		man.Time = man.Time.In(Loc)
 		fields = append(fields, &discordgo.MessageEmbedField{
-			Name:  man.Title,
+			Name:  "🔺" + man.Title,
 			Value: fmt.Sprintf("%s\n%s", TimeBefore(man.Time), config.PrintTime(man.Time)),
 		})
 	}
