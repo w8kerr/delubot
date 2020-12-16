@@ -53,5 +53,7 @@ func init() {
 	}
 	// Commands for both remote and dev
 
+	// go Router.InitScanForUpdates()
+
 	fmt.Println("MUX INIT", Router.Prefix)
 }

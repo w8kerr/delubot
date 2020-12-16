@@ -19,7 +19,7 @@ func (m *Mux) EightBall(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 	// 	return
 	// }
 
-	ctx.Content = strings.TrimPrefix(ctx.Content, "avatar")
+	ctx.Content = strings.TrimPrefix(ctx.Content, "8ball")
 	ctx.Content = strings.TrimSpace(ctx.Content)
 
 	if ctx.Content == "enable" && dm.Author.ID == config.CreatorID {

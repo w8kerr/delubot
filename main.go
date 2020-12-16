@@ -84,6 +84,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	env := os.Getenv("DELUBOT_ENV")
+	if env != "dev" {
+		_, err = Session.ChannelMessageSend("782092598290546722", "🔺DeluBot online!")
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+
 	sheetsync.Init(Session)
 	go sheetsync.Sweeper()
 
