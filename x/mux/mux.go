@@ -109,7 +109,8 @@ type MessageLog struct {
 	ChannelName     string
 	UserName        string
 	Content         string
-	OriginalContent string `bson:"originalContent,omitempty"`
+	OriginalContent string                         `bson:"originalContent,omitempty"`
+	Attachments     []*discordgo.MessageAttachment `bson:"attachments,omitempty"`
 	MessageID       string
 	Action          string
 	Time            time.Time
@@ -133,12 +134,20 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		return
 	}
 
+	channelName := ""
+	channel, err := ds.Channel(mc.ChannelID)
+	if err == nil {
+		channelName = channel.Name
+	} else {
+		channelName = err.Error()
+	}
+
 	// Ignore all messages by non-moderators
 	msg := mc.Author.Username + ": " + mc.Content
 	if IsModerator(ds, mc) {
 		msg = "[M] " + msg
 	}
-	fmt.Println(msg)
+	fmt.Println("#" + channelName + " - " + msg)
 	if !IsModerator(ds, mc) {
 		return
 	}
@@ -348,6 +357,7 @@ func (m *Mux) LogMessageCreate(db *mgo.Database, ds *discordgo.Session, mc *disc
 		ChannelName: *channelName,
 		UserName:    mc.Author.Username + "#" + mc.Author.Discriminator,
 		Content:     mc.Content,
+		Attachments: mc.Attachments,
 		MessageID:   mc.ID,
 		Action:      "create",
 		Time:        time.Now(),
