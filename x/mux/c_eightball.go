@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/w8kerr/delubot/config"
 )
 
 func (m *Mux) EightBall(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
@@ -18,12 +19,23 @@ func (m *Mux) EightBall(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 	// 	return
 	// }
 
-	notAmusedTea := "<:notamusedtea:774201181425238036>"
-	prerespond(fmt.Sprintf("🔺No more eight ball I dropped it on the floor " + notAmusedTea))
-	return
-
 	ctx.Content = strings.TrimPrefix(ctx.Content, "avatar")
 	ctx.Content = strings.TrimSpace(ctx.Content)
+
+	if ctx.Content == "enable" && dm.Author.ID == config.CreatorID {
+		prerespond("🔺Ah! I dropped the eight ball! " + config.Emoji("delucry"))
+		return
+	}
+	if ctx.Content == "disable" && dm.Author.ID == config.CreatorID {
+		prerespond("🔺I found a new eight ball! A listener gave it to me! " + config.Emoji("deluyay"))
+		return
+	}
+
+	if !config.EightBallEnabled {
+		prerespond("🔺No more eight ball I dropped it on the floor " + config.Emoji("notamusedtea"))
+		return
+	}
+
 	if ctx.Content == "" {
 		prerespond("🔺Usage: -db 8ball <yes or no question>")
 		return

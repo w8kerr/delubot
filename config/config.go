@@ -64,9 +64,13 @@ var TimeFormat string
 
 var GoogleCredentials bson.M
 
+var EightBallEnabled bool
+
 var Loc *time.Location
 
 var Proposals = make(map[string]string)
+
+var CreatorID = "204752740503650304"
 
 type BotConfig struct {
 	ModeratorRoles    map[string][]string   `json:"moderator_roles" bson:"moderator_roles"`
@@ -76,6 +80,7 @@ type BotConfig struct {
 	RoleRemoveEnabled map[string]bool       `json:"role_remove_enabled" bson:"role_remove_enabled"`
 	TimeFormat        string                `json:"time_format" bson:"time_format"`
 	GoogleCredentials bson.M                `json:"-" bson:"google_credentials"`
+	EightBallEnabled  bool                  `json:"eight_ball_enabled" bson:"eight_ball_enabled"`
 }
 
 // Get Load the config object
@@ -395,6 +400,19 @@ func SetRoleRemoveEnabled(guildID string, enabled bool) error {
 	RoleRemoveEnabled[guildID] = enabled
 
 	return nil
+}
+
+func SetEightBallEnabled(enabled bool) error {
+	update := bson.M{
+		"eight_ball_enabled": enabled,
+	}
+
+	err := UpdateConfig(update)
+	if err != nil {
+		return err
+	}
+
+	EightBallEnabled = enabled
 }
 
 func ParseTime(raw string) time.Time {
