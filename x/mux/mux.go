@@ -248,8 +248,6 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 }
 
 func (m *Mux) OnMessageDelete(ds *discordgo.Session, md *discordgo.MessageDelete) {
-	fmt.Println("DELETE MESSAGE")
-	utils.PrintJSON(md)
 	session := mongo.MDB.Clone()
 	defer session.Close()
 	db := session.DB(mongo.DB_NAME)
@@ -310,8 +308,6 @@ func (m *Mux) OnMessageDeleteBulk(ds *discordgo.Session, mdb *discordgo.MessageD
 }
 
 func (m *Mux) OnMessageUpdate(ds *discordgo.Session, mu *discordgo.MessageUpdate) {
-	fmt.Println("EDIT MESSAGE")
-	utils.PrintJSON(mu)
 	session := mongo.MDB.Clone()
 	defer session.Close()
 	db := session.DB(mongo.DB_NAME)
