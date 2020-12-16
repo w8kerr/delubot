@@ -73,7 +73,7 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 			return recs[a].ScheduledTime.Before(recs[b].ScheduledTime)
 		})
 
-		for _, rec := range recs {
+		for i, rec := range recs {
 			embed := LinkedEmbed(rec)
 
 			msg, err := ds.ChannelMessageSendEmbed(dm.ChannelID, embed)
@@ -81,7 +81,7 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 				EmbedsToUpdate = append(EmbedsToUpdate, EmbedToUpdate{
 					ChannelID:     dm.ChannelID,
 					MessageID:     msg.ID,
-					YoutubeRecord: &rec,
+					YoutubeRecord: &recs[i],
 				})
 			}
 		}
@@ -104,7 +104,7 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 			respond("🔺Upcoming scheduled streams:")
 		}
 		Loc, _ := time.LoadLocation("Asia/Tokyo")
-		for _, schedStream := range schedStreams {
+		for i, schedStream := range schedStreams {
 			collision := false
 			for _, rec := range recs {
 				diff := schedStream.Time.Sub(rec.ScheduledTime).Hours()
@@ -122,7 +122,7 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 					EmbedsToUpdate = append(EmbedsToUpdate, EmbedToUpdate{
 						ChannelID:    dm.ChannelID,
 						MessageID:    msg.ID,
-						ManualStream: &schedStream,
+						ManualStream: &schedStreams[i],
 					})
 				}
 			}
@@ -325,17 +325,16 @@ func (m *Mux) ScanForUpdates(ds *discordgo.Session) {
 
 	fmt.Println("EMBEDS TO UPDATE", len(EmbedsToUpdate))
 	for i := range EmbedsToUpdate {
-		etu := EmbedsToUpdate[i]
-		if etu.YoutubeRecord != nil {
-			embed := LinkedEmbed(*etu.YoutubeRecord)
-			_, err := ds.ChannelMessageEditEmbed(etu.ChannelID, etu.MessageID, embed)
+		if EmbedsToUpdate[i].YoutubeRecord != nil {
+			embed := LinkedEmbed(*EmbedsToUpdate[i].YoutubeRecord)
+			_, err := ds.ChannelMessageEditEmbed(EmbedsToUpdate[i].ChannelID, EmbedsToUpdate[i].MessageID, embed)
 			if err != nil {
 				fmt.Println("Failed to update embed, " + err.Error())
 			}
-		} else if etu.ManualStream != nil {
+		} else if EmbedsToUpdate[i].ManualStream != nil {
 			var matchedRec *models.YoutubeStreamRecord
 			for _, rec := range recs {
-				diff := etu.ManualStream.Time.Sub(rec.ScheduledTime).Hours()
+				diff := EmbedsToUpdate[i].ManualStream.Time.Sub(rec.ScheduledTime).Hours()
 				if diff > -1.1 && diff < 1.1 {
 					matchedRec = &rec
 				}
@@ -343,13 +342,13 @@ func (m *Mux) ScanForUpdates(ds *discordgo.Session) {
 
 			if matchedRec != nil {
 				embed := LinkedEmbed(*matchedRec)
-				_, err := ds.ChannelMessageEditEmbed(etu.ChannelID, etu.MessageID, embed)
+				_, err := ds.ChannelMessageEditEmbed(EmbedsToUpdate[i].ChannelID, EmbedsToUpdate[i].MessageID, embed)
 				if err != nil {
 					fmt.Println("Failed to update embed, " + err.Error())
 				}
 			} else {
-				embed := ScheduledEmbed(*etu.ManualStream)
-				_, err := ds.ChannelMessageEditEmbed(etu.ChannelID, etu.MessageID, embed)
+				embed := ScheduledEmbed(*EmbedsToUpdate[i].ManualStream)
+				_, err := ds.ChannelMessageEditEmbed(EmbedsToUpdate[i].ChannelID, EmbedsToUpdate[i].MessageID, embed)
 				if err != nil {
 					fmt.Println("Failed to update embed, " + err.Error())
 				}
