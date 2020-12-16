@@ -143,7 +143,7 @@ func ScheduledEmbed(schedStream ManualStream) *discordgo.MessageEmbed {
 		Footer: &discordgo.MessageEmbedFooter{
 			Text: config.PrintTime(schedStream.Time),
 		},
-		Timestamp: "Updated " + config.PrintTime(time.Now()),
+		// Timestamp: "Updated " + config.PrintTime(time.Now()),
 	}
 
 	return embed
@@ -159,8 +159,8 @@ func LinkedEmbed(rec models.YoutubeStreamRecord) *discordgo.MessageEmbed {
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: rec.StreamThumbnail,
 		},
-		Color:     3066993,
-		Timestamp: "Updated " + config.PrintTime(time.Now()),
+		Color: 3066993,
+		// Timestamp: "Updated " + config.PrintTime(time.Now()),
 	}
 
 	return embed
