@@ -23,7 +23,7 @@ type EmbedToUpdate struct {
 	Time      time.Time
 }
 
-var EmbedsToUpdate []EmbedToUpdate
+var EmbedsToUpdate = []EmbedToUpdate{}
 
 func (m *Mux) Stream(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	respond := GetResponder(ds, dm)
@@ -34,8 +34,6 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 	prerespond := GetResponder(ds, dm)
 	msg := prerespond("🔺Looking up stream information...")
 	respond := GetEditor(ds, msg)
-
-	EmbedsToUpdate = []EmbedToUpdate{}
 
 	session := mongo.MDB.Clone()
 	defer session.Close()
@@ -90,7 +88,8 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 
 	embed := StreamsEmbed(schedStreams, recs)
 
-	msg, err = ds.ChannelMessageEditEmbed(dm.ChannelID, msg.ID, embed)
+	ds.ChannelMessageDelete(dm.ChannelID, msg.ID)
+	msg, err = ds.ChannelMessageSendEmbed(dm.ChannelID, embed)
 	if err == nil {
 		EmbedsToUpdate = append(EmbedsToUpdate, EmbedToUpdate{
 			ChannelID: dm.ChannelID,
@@ -113,9 +112,12 @@ func StreamsEmbed(mans []ManualStream, recs []models.YoutubeStreamRecord) *disco
 		return recs[a].ScheduledTime.Before(recs[b].ScheduledTime)
 	})
 
+	Loc, _ := time.LoadLocation("Asia/Tokyo")
+
 	fields := []*discordgo.MessageEmbedField{}
 
 	for _, rec := range recs {
+		rec.ScheduledTime = rec.ScheduledTime.In(Loc)
 		fields = append(fields, &discordgo.MessageEmbedField{
 			Name:  rec.StreamTitle,
 			Value: fmt.Sprintf("[See Fanbox for link](%s)\nRestricted to ¥%d plan members\n%s\n%s", rec.PostLink, rec.PostPlan, TimeBefore(rec.ScheduledTime), config.PrintTime(rec.ScheduledTime)),
@@ -127,6 +129,7 @@ func StreamsEmbed(mans []ManualStream, recs []models.YoutubeStreamRecord) *disco
 			continue
 		}
 
+		man.Time = man.Time.In(Loc)
 		fields = append(fields, &discordgo.MessageEmbedField{
 			Name:  man.Title,
 			Value: fmt.Sprintf("%s\n%s", TimeBefore(man.Time), config.PrintTime(man.Time)),
@@ -264,7 +267,7 @@ func (m *Mux) RemoveStream(ds *discordgo.Session, dm *discordgo.Message, ctx *Co
 }
 
 func (m *Mux) InitScanForUpdates(ds *discordgo.Session) {
-	sleepDuration := 5 * time.Second
+	sleepDuration := 60 * time.Second
 	for {
 		time.Sleep(sleepDuration)
 		m.ScanForUpdates(ds)
