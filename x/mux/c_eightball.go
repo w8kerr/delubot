@@ -22,12 +22,14 @@ func (m *Mux) EightBall(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 	ctx.Content = strings.TrimPrefix(ctx.Content, "8ball")
 	ctx.Content = strings.TrimSpace(ctx.Content)
 
-	if ctx.Content == "enable" && dm.Author.ID == config.CreatorID {
+	if ctx.Content == "disable" && dm.Author.ID == config.CreatorID {
 		prerespond("🔺Ah! I dropped the eight ball! " + config.Emoji("delucry"))
+		config.SetEightBallEnabled(false)
 		return
 	}
-	if ctx.Content == "disable" && dm.Author.ID == config.CreatorID {
+	if ctx.Content == "enable" && dm.Author.ID == config.CreatorID {
 		prerespond("🔺I found a new eight ball! A listener gave it to me! " + config.Emoji("deluyay"))
+		config.SetEightBallEnabled(true)
 		return
 	}
 
