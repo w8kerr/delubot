@@ -19,6 +19,9 @@ func init() {
 	// Register the mux OnMessageCreate handler that listens for and processes
 	// all messages received.
 	Session.AddHandler(Router.OnMessageCreate)
+	Session.AddHandler(Router.OnMessageDelete)
+	Session.AddHandler(Router.OnMessageDeleteBulk)
+	Session.AddHandler(Router.OnMessageUpdate)
 	Session.AddHandler(Router.AddReaction)
 	Session.AddHandler(Router.RemoveReaction)
 

@@ -8,9 +8,13 @@ import (
 	"log"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/globalsign/mgo"
 	"github.com/w8kerr/delubot/config"
+	"github.com/w8kerr/delubot/mongo"
+	"github.com/w8kerr/delubot/utils"
 )
 
 // Route holds information about a specific message route handler
@@ -101,11 +105,26 @@ func (m *Mux) FuzzyMatch(msg string) (*Route, []string) {
 	return r, fields[fk:]
 }
 
+type MessageLog struct {
+	ChannelName     string
+	UserName        string
+	Content         string
+	OriginalContent string `bson:"originalContent,omitempty"`
+	MessageID       string
+	Action          string
+	Time            time.Time
+}
+
 // OnMessageCreate is a DiscordGo Event Handler function.  This must be
 // registered using the DiscordGo.Session.AddHandler function.  This function
 // will receive all Discord messages and parse them for matches to registered
 // routes.
 func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate) {
+	session := mongo.MDB.Clone()
+	defer session.Close()
+	db := session.DB(mongo.DB_NAME)
+
+	m.LogMessageCreate(db, ds, mc, nil)
 
 	var err error
 
@@ -226,6 +245,117 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		m.Default.Run(ds, mc.Message, ctx)
 	}
 
+}
+
+func (m *Mux) OnMessageDelete(ds *discordgo.Session, md *discordgo.MessageDelete) {
+	fmt.Println("DELETE MESSAGE")
+	utils.PrintJSON(md)
+	session := mongo.MDB.Clone()
+	defer session.Close()
+	db := session.DB(mongo.DB_NAME)
+	mlog := db.C("message_logs")
+
+	channelName := ""
+	channel, err := ds.Channel(md.ChannelID)
+	if err == nil {
+		channelName = channel.Name
+	} else {
+		channelName = err.Error()
+	}
+
+	message, err := ds.ChannelMessage(md.ChannelID, md.ID)
+	if err != nil {
+		fmt.Println("Failed to get bulk deleted message: " + err.Error())
+	}
+	utils.PrintJSON(message)
+
+	mlog.Insert(MessageLog{
+		ChannelName: channelName,
+		UserName:    "#",
+		Content:     md.Content,
+		MessageID:   md.ID,
+		Action:      "delete",
+		Time:        time.Now(),
+	})
+}
+
+func (m *Mux) OnMessageDeleteBulk(ds *discordgo.Session, mdb *discordgo.MessageDeleteBulk) {
+	session := mongo.MDB.Clone()
+	defer session.Close()
+	db := session.DB(mongo.DB_NAME)
+	mlog := db.C("message_logs")
+
+	channelName := ""
+	channel, err := ds.Channel(mdb.ChannelID)
+	if err == nil {
+		channelName = channel.Name
+	} else {
+		channelName = err.Error()
+	}
+
+	for _, msgID := range mdb.Messages {
+		message, err := ds.ChannelMessage(mdb.ChannelID, msgID)
+		if err != nil {
+			fmt.Println("Failed to get bulk deleted message: " + err.Error())
+		}
+		mlog.Insert(MessageLog{
+			ChannelName: channelName,
+			UserName:    "#",
+			Content:     message.Content,
+			MessageID:   message.ID,
+			Action:      "delete",
+			Time:        time.Now(),
+		})
+	}
+}
+
+func (m *Mux) OnMessageUpdate(ds *discordgo.Session, mu *discordgo.MessageUpdate) {
+	fmt.Println("EDIT MESSAGE")
+	utils.PrintJSON(mu)
+	session := mongo.MDB.Clone()
+	defer session.Close()
+	db := session.DB(mongo.DB_NAME)
+	mlog := db.C("message_logs")
+
+	channelName := ""
+	channel, err := ds.Channel(mu.ChannelID)
+	if err == nil {
+		channelName = channel.Name
+	} else {
+		channelName = err.Error()
+	}
+
+	mlog.Insert(MessageLog{
+		ChannelName: channelName,
+		UserName:    "#",
+		Content:     mu.Content,
+		MessageID:   mu.ID,
+		Action:      "edit",
+		Time:        time.Now(),
+	})
+}
+
+func (m *Mux) LogMessageCreate(db *mgo.Database, ds *discordgo.Session, mc *discordgo.MessageCreate, channelName *string) {
+	mlog := db.C("message_logs")
+	if channelName == nil {
+		name := ""
+		channel, err := ds.Channel(mc.ChannelID)
+		if err == nil {
+			name = channel.Name
+		} else {
+			name = err.Error()
+		}
+		channelName = &name
+	}
+
+	mlog.Insert(MessageLog{
+		ChannelName: *channelName,
+		UserName:    mc.Author.Username + "#" + mc.Author.Discriminator,
+		Content:     mc.Content,
+		MessageID:   mc.ID,
+		Action:      "create",
+		Time:        time.Now(),
+	})
 }
 
 func (m *Mux) AddReaction(ds *discordgo.Session, ra *discordgo.MessageReactionAdd) {
