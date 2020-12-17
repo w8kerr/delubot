@@ -8,6 +8,8 @@ func Emoji(emojiCode string) string {
 		return "<:delucry:760035527625539616>"
 	case "deluyay":
 		return "<:deluyay:759720899737419838>"
+	case "delupat":
+		return "<:delupat:771927216581771286>"
 	default:
 		return "[emoji not found]"
 	}

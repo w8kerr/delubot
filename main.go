@@ -92,6 +92,11 @@ func main() {
 		}
 	}
 
+	channels, err := Session.GuildChannels("755437328515989564")
+	for _, channel := range channels {
+		fmt.Println("Channel viewable - #" + channel.Name)
+	}
+
 	sheetsync.Init(Session)
 	go sheetsync.Sweeper()
 
