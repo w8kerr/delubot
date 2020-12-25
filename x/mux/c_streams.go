@@ -158,7 +158,7 @@ func TimeBefore(t time.Time) string {
 	days := int(total / (60 * 60 * 24))
 	hours := int(total / (60 * 60) % 24)
 	minutes := int(total/60) % 60
-	deltas := float32(total) / (60 * 60 * 6)
+	deltas := float32(total) / (60 * 60 * 4)
 
 	parts := []string{}
 	if days > 0 {
