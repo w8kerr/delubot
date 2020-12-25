@@ -158,6 +158,7 @@ func TimeBefore(t time.Time) string {
 	days := int(total / (60 * 60 * 24))
 	hours := int(total / (60 * 60) % 24)
 	minutes := int(total/60) % 60
+	deltas := float32(total) / (60 * 60 * 6)
 
 	parts := []string{}
 	if days > 0 {
@@ -168,7 +169,7 @@ func TimeBefore(t time.Time) string {
 	}
 	parts = append(parts, fmt.Sprintf("%d minutes", minutes))
 
-	return strings.Join(parts, ", ") + " from now"
+	return fmt.Sprintf("%s (%.1f Δs) from now", strings.Join(parts, ", "), deltas)
 }
 
 type ManualStream struct {
