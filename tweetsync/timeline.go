@@ -163,7 +163,7 @@ func TweetToEmbed(tweet *twitter.Tweet, translation string, translators []string
 			Name: fmt.Sprintf("%s\n@%s", tweet.User.Name, tweet.User.ScreenName),
 			URL:  fmt.Sprintf("https://twitter.com/%s", tweet.User.ScreenName),
 		},
-		Description: fmt.Sprintf("[Status: %s](https://twitter.com/%s/%s)\n────────────────────", tweet.IDStr, tweet.User.ScreenName, tweet.IDStr),
+		Description: fmt.Sprintf("[Status: %s](https://twitter.com/%s/status/%s)\n────────────────────", tweet.IDStr, tweet.User.ScreenName, tweet.IDStr),
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name:  fmt.Sprintf("❝ %s ❞", translation),
