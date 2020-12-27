@@ -56,6 +56,7 @@ func init() {
 		Router.Route("headpat", "Give a headpat", Router.Headpat)
 		Router.Route("ttl", "Provide translation for the most recent untranslated tweet in a Twitter feed channel", Router.TweetTranslate)
 		Router.Route("tedit", "Provide translation for the nth tweet (counting upwards) in a Twitter feed channel", Router.TweetEdit)
+		Router.Route("tl", "Translate from Japanese to English", Router.Translate)
 	}
 	// Commands for both remote and dev
 
