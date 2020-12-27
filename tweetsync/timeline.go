@@ -91,16 +91,12 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			log.Printf("Failed to initialize Tweet stream, %s", err)
 			return
 		}
-		fmt.Println(len(tweets), "since", sinceID)
 
 		sort.Slice(tweets, func(i, j int) bool {
 			return tweets[i].ID < tweets[j].ID
 		})
 
 		for _, tweet := range tweets {
-			fmt.Println("STREAM DEMUX")
-			utils.PrintJSON(tweet)
-
 			translation, err := tl.Translate(tweet.Text)
 			if err != nil {
 				translation = fmt.Sprintf("[Translation error: %s]", err)
