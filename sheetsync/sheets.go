@@ -91,14 +91,14 @@ func SafeAccessor(values [][]interface{}) func(int, int) string {
 }
 
 func GetCurrentPage(svc *sheets.Service, sheetID string) (*sheets.Sheet, bool, error) {
-	sheet, grantTime, removeTime, endTime, err := DoGetCurrentPage(svc, sheetID)
+	sheet, _, removeTime, _, err := DoGetCurrentPage(svc, sheetID)
 	if err != nil {
 		return sheet, false, err
 	}
 
 	now := config.Now()
-	fmt.Println("Start:", config.PrintTime(grantTime), "End:", config.PrintTime(endTime), config.PrintTime(now))
-	fmt.Println("Found current page:", sheet.Properties.Title)
+	// fmt.Println("Start:", config.PrintTime(grantTime), "End:", config.PrintTime(endTime), config.PrintTime(now))
+	// fmt.Println("Found current page:", sheet.Properties.Title)
 	return sheet, now.After(removeTime), nil
 }
 
@@ -109,7 +109,7 @@ func DoGetCurrentPage(svc *sheets.Service, sheetID string) (*sheets.Sheet, time.
 	}
 
 	for _, sheet := range resp.Sheets {
-		fmt.Println(sheet.Properties.Title, sheet.Properties.SheetId)
+		// fmt.Println(sheet.Properties.Title, sheet.Properties.SheetId)
 		r := fmt.Sprintf("'%s'!B1:B3", sheet.Properties.Title)
 		resp2, err := svc.Spreadsheets.Values.Get(sheetID, r).Do()
 		if err != nil {

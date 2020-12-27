@@ -182,10 +182,18 @@ func SyncGuild(svc *sheets.Service, guildID string) {
 	}
 
 	report := func(gaveAlpha []RoleRow, gaveSpecial []RoleRow, gaveWhale []RoleRow, removedRoles []RoleRow, wasBanned []RoleRow, errors []RoleRow) {
-		log.Printf("Granted Alpha role to %d members", len(gaveAlpha))
-		log.Printf("Granted Special role to %d members", len(gaveSpecial))
-		log.Printf("Granted Whale role to %d members", len(gaveWhale))
-		log.Printf("Removed roles from %d members (%d because of bans)", len(removedRoles), len(wasBanned))
+		if len(gaveAlpha) > 0 {
+			log.Printf("Granted Alpha role to %d members", len(gaveAlpha))
+		}
+		if len(gaveSpecial) > 0 {
+			log.Printf("Granted Special role to %d members", len(gaveSpecial))
+		}
+		if len(gaveWhale) > 0 {
+			log.Printf("Granted Whale role to %d members", len(gaveWhale))
+		}
+		if len(removedRoles) > 0 {
+			log.Printf("Removed roles from %d members (%d because of bans)", len(removedRoles), len(wasBanned))
+		}
 
 		if len(errors) > 0 {
 			for _, err := range errors {
