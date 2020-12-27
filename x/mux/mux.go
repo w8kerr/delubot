@@ -372,6 +372,15 @@ func (m *Mux) AddReaction(ds *discordgo.Session, ra *discordgo.MessageReactionAd
 	if channelID, ok := config.Proposals[ra.MessageID]; ok {
 		m.UpdateProposal(ds, ra.GuildID, channelID, ra.MessageID)
 	}
+
+	if tu, ok := config.TweetUpdates[ra.MessageID]; ok {
+		if ra.Emoji.Name == "✅" {
+			m.DoTweetUpdate(ds, tu)
+		}
+		if ra.Emoji.Name == "❌" {
+			m.CancelTweetUpdate(ds, tu)
+		}
+	}
 }
 
 func (m *Mux) RemoveReaction(ds *discordgo.Session, rr *discordgo.MessageReactionRemove) {

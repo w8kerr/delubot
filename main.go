@@ -18,6 +18,8 @@ import (
 	"github.com/w8kerr/delubot/config"
 	"github.com/w8kerr/delubot/mongo"
 	"github.com/w8kerr/delubot/sheetsync"
+	"github.com/w8kerr/delubot/tl"
+	"github.com/w8kerr/delubot/tweetsync"
 )
 
 // Version is a constant that stores the Disgord version information.
@@ -84,13 +86,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	tl.Init()
+
 	env := os.Getenv("DELUBOT_ENV")
 	if env != "dev" {
 		_, err = Session.ChannelMessageSend("782092598290546722", "🔺DeluBot online!")
 		if err != nil {
 			fmt.Println(err.Error())
 		}
+
 	}
+
+	go tweetsync.InitStreams(Session)
 
 	channels, err := Session.GuildChannels("755437328515989564")
 	for _, channel := range channels {

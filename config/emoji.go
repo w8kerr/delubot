@@ -10,6 +10,21 @@ func Emoji(emojiCode string) string {
 		return "<:deluyay:759720899737419838>"
 	case "delupat":
 		return "<:delupat:771927216581771286>"
+	case "white_check_mark":
+		return "\u2705"
+	case "x":
+		return "\u274C"
+	default:
+		return "[emoji not found]"
+	}
+}
+
+func NativeEmoji(emojiCode string) string {
+	switch emojiCode {
+	case "white_check_mark":
+		return "\u2705"
+	case "x":
+		return "\u274C"
 	default:
 		return "[emoji not found]"
 	}

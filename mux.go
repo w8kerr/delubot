@@ -54,6 +54,8 @@ func init() {
 		// Router.Route("proposal", "Create a sign-off sheet following the message.", Router.Proposal)
 		Router.Route("8ball", "Receive DeluBot's guidance", Router.EightBall)
 		Router.Route("headpat", "Give a headpat", Router.Headpat)
+		Router.Route("ttl", "Provide translation for the most recent untranslated tweet in a Twitter feed channel", Router.TweetTranslate)
+		Router.Route("tedit", "Provide translation for the nth tweet (counting upwards) in a Twitter feed channel", Router.TweetEdit)
 	}
 	// Commands for both remote and dev
 

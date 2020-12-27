@@ -38,6 +38,21 @@ type RoleConfig struct {
 	Former  string `json:"former" bson:"former"`
 }
 
+type TweetSyncConfig struct {
+	Handle    string `json:"handle" bson:"handle"`
+	ChannelID string `json:"channel_id" bson:"channel_id"`
+	SinceID   int64  `json:"since_id" bson:"since_id"`
+}
+
+type TweetUpdate struct {
+	ChannelID      string `json:"channel_id" bson:"channel_id"`
+	UserMessageID  string `json:"user_message_id" bson:"user_message_id"`
+	BotMessageID   string `json:"bot_message_id" bson:"bot_message_id"`
+	TweetMessageID string `json:"tweet_message_id" bson:"tweet_message_id"`
+	Translation    string `json:"translation" bson:"translation"`
+	Translator     string `json:"translator" bson:"translator"`
+}
+
 var GrantRoles = map[string]RoleConfig{
 	"755437328515989564": { // DFS
 		Alpha:   "760705266953355295",
@@ -72,6 +87,10 @@ var Proposals = make(map[string]string)
 
 var CreatorID = "204752740503650304"
 
+var TweetSyncChannels = []TweetSyncConfig{}
+
+var TweetUpdates = make(map[string]TweetUpdate)
+
 type BotConfig struct {
 	ModeratorRoles    map[string][]string   `json:"moderator_roles" bson:"moderator_roles"`
 	GrantRoles        map[string]RoleConfig `json:"grant_roles" bson:"grant_roles"`
@@ -81,6 +100,7 @@ type BotConfig struct {
 	TimeFormat        string                `json:"time_format" bson:"time_format"`
 	GoogleCredentials bson.M                `json:"-" bson:"google_credentials"`
 	EightBallEnabled  bool                  `json:"eight_ball_enabled" bson:"eight_ball_enabled"`
+	TweetSyncChannels []TweetSyncConfig     `json:"tweet_sync_channels" bson:"tweet_sync_channels"`
 }
 
 // Get Load the config object
@@ -117,6 +137,8 @@ func LoadConfig() error {
 	RoleRemoveEnabled = config.RoleRemoveEnabled
 	TimeFormat = config.TimeFormat
 	GoogleCredentials = config.GoogleCredentials
+	EightBallEnabled = config.EightBallEnabled
+	TweetSyncChannels = config.TweetSyncChannels
 
 	if GrantRoles == nil {
 		GrantRoles = make(map[string]RoleConfig)
@@ -413,6 +435,34 @@ func SetEightBallEnabled(enabled bool) error {
 	}
 
 	EightBallEnabled = enabled
+	return nil
+}
+
+func SetTweetSyncSinceID(handle, channelID string, sinceID int64) error {
+	session := mongo.MDB.Clone()
+	defer session.Close()
+	session.SetMode(mgo.Strong, false)
+	db := session.DB(mongo.DB_NAME)
+	configCol := db.C("config")
+
+	config := BotConfig{}
+	err := configCol.Find(bson.M{}).One(&config)
+	if err != nil {
+		return err
+	}
+
+	for i, ts := range config.TweetSyncChannels {
+		if ts.Handle == handle && ts.ChannelID == channelID {
+			config.TweetSyncChannels[i].SinceID = sinceID
+		}
+	}
+
+	err = configCol.Update(bson.M{}, bson.M{"$set": bson.M{"tweet_sync_channels": config.TweetSyncChannels}})
+	if err != nil {
+		return err
+	}
+
+	TweetSyncChannels = config.TweetSyncChannels
 	return nil
 }
 

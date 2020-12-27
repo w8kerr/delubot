@@ -7,6 +7,7 @@ package models
 import (
 	"time"
 
+	"github.com/dghubble/go-twitter/twitter"
 	"github.com/globalsign/mgo/bson"
 )
 
@@ -182,6 +183,19 @@ type YoutubeStreamRecord struct {
 	ScheduledTime   time.Time     `json:"scheduled_time" bson:"scheduled_time"`
 	StreamTitle     string        `json:"stream_title" bson:"stream_title"`
 	StreamThumbnail string        `json:"stream_thumbnail" bson:"stream_thumbnail"`
+}
+
+// SyncedTweet Record of a tweet that was echoed from Twitter into Discord
+type SyncedTweet struct {
+	OID             bson.ObjectId `json:"_id" bson:"_id,omitempty"`
+	ChannelID       string        `json:"channel_id" bson:"channel_id"`
+	MessageID       string        `json:"message_id" bson:"message_id"`
+	Tweet           twitter.Tweet `json:"tweet" bson:"tweet"`
+	Translation     string        `json:"translation" bson:"translation"`
+	CreatedAt       time.Time     `json:"created_at" bson:"created_at"`
+	UpdatedAt       time.Time     `json:"updated_at" bson:"updated_at"`
+	Translators     []string      `json:"translators" bson:"translators"`
+	HumanTranslated bool          `json:"human_translated" bson:"human_translated"`
 }
 
 // BTableOptions holds metadata about how to sort and paginate a query for a
