@@ -21,8 +21,9 @@ import (
 
 var TwitterTimeFormat = "Mon Jan 2 15:04:05 +0000 2006"
 
-// InitStreams initialize all streams for Tweet streaming
-func InitStreams(ds *discordgo.Session) {
+// InitTimelines initialize all streams for Tweet streaming
+func InitTimelines(ds *discordgo.Session) {
+	fmt.Println("InitTimelines")
 	if len(config.TweetSyncChannels) == 0 {
 		return
 	}
@@ -41,12 +42,12 @@ func InitStreams(ds *discordgo.Session) {
 	client := twitter.NewClient(httpClient)
 
 	for i := range config.TweetSyncChannels {
-		ListenToStream(ds, client, &config.TweetSyncChannels[i])
+		ScanTimeline(ds, client, &config.TweetSyncChannels[i])
 	}
 }
 
-// ListenToStream listens to a stream of Tweets and posts them in the specified channel
-func ListenToStream(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig) {
+// ScanTimeline polls a stream of Tweets and posts them in the specified channel
+func ScanTimeline(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig) {
 	fmt.Println("Init Tweetsync - Handle", ts.Handle)
 	fmt.Println("Init Tweetsync - Channel ID", ts.ChannelID)
 
@@ -90,6 +91,7 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			log.Printf("Failed to initialize Tweet stream, %s", err)
 			return
 		}
+		fmt.Println(len(tweets), "since", sinceID)
 
 		sort.Slice(tweets, func(i, j int) bool {
 			return tweets[i].ID < tweets[j].ID
