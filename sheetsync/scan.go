@@ -19,7 +19,7 @@ func Sweeper() {
 }
 
 func Scan() {
-	log.Println("Starting discord roles sync", time.Now())
+	// log.Println("Starting discord roles sync", time.Now())
 	syncGuilds := make(map[string]bool)
 	for guildID, doSync := range config.RoleGrantEnabled {
 		if doSync {
@@ -219,14 +219,14 @@ func DoSyncGuild(svc *sheets.Service, guildID string, sheetID string, page *shee
 		log.Printf("%s - Failed to read automatic Sheet rows, %s", guildID, err)
 		return
 	}
-	log.Printf("%s - Got %d automatic entries", guildID, len(entries))
+	// log.Printf("%s - Got %d automatic entries", guildID, len(entries))
 
 	manualEntries, err := ReadAllManual(svc, sheetID, page)
 	if err != nil {
 		log.Printf("%s - Failed to read manual Sheet rows, %s", guildID, err)
 		return
 	}
-	log.Printf("%s - Got %d manual entries", guildID, len(manualEntries))
+	// log.Printf("%s - Got %d manual entries", guildID, len(manualEntries))
 
 	entries = append(entries, manualEntries...)
 	entryMap := MapRows(entries)
@@ -243,7 +243,7 @@ func DoSyncGuild(svc *sheets.Service, guildID string, sheetID string, page *shee
 		log.Printf("%s - Failed to get guild members, %s", guildID, err)
 		return
 	}
-	log.Printf("%s - Processing %d members", guildID, len(members))
+	// log.Printf("%s - Processing %d members", guildID, len(members))
 
 	formatReqs := []*sheets.Request{}
 	gaveAlpha := []RoleRow{}
