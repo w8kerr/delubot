@@ -271,7 +271,7 @@ func (m *Mux) OnMessageDelete(ds *discordgo.Session, md *discordgo.MessageDelete
 	}
 
 	deleted := MessageLog{}
-	err = mlog.Find(bson.M{"message_id": md.ID}).One(&deleted)
+	err = mlog.Find(bson.M{"messageid": md.ID}).One(&deleted)
 	if err != nil {
 		fmt.Println("Failed to get deleted message: " + err.Error())
 	}
@@ -303,7 +303,7 @@ func (m *Mux) OnMessageDeleteBulk(ds *discordgo.Session, mdb *discordgo.MessageD
 
 	for _, msgID := range mdb.Messages {
 		deleted := MessageLog{}
-		err = mlog.Find(bson.M{"message_id": msgID}).One(&deleted)
+		err = mlog.Find(bson.M{"messageid": msgID}).One(&deleted)
 		if err != nil {
 			fmt.Println("Failed to get bulk deleted message: " + err.Error())
 		}
