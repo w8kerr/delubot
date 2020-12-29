@@ -88,8 +88,8 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			SinceID:    sinceID,
 		})
 		if err != nil {
-			log.Printf("Failed to initialize Tweet stream, %s", err)
-			return
+			log.Printf("Failed to get Tweet stream, %s", err)
+			continue
 		}
 
 		sort.Slice(tweets, func(i, j int) bool {
@@ -114,7 +114,7 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			msg, err := ds.ChannelMessageSendEmbed(ts.ChannelID, embed)
 			if err != nil {
 				log.Printf("Failed to send Tweet %s, %s", tweet.IDStr, err)
-				return
+				continue
 			}
 			st.MessageID = msg.ID
 
@@ -127,7 +127,11 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			stCol.Insert(st)
 
 			sinceID = tweets[0].ID
-			config.SetTweetSyncSinceID(ts.Handle, ts.ChannelID, tweets[0].ID)
+			err = config.SetTweetSyncSinceID(ts.Handle, ts.ChannelID, tweets[0].ID)
+			if err != nil {
+				log.Printf("Failed to send Tweet %s, %s", tweet.IDStr, err)
+				continue
+			}
 		}
 	}
 }
