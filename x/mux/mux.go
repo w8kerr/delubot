@@ -12,9 +12,9 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	"github.com/w8kerr/delubot/config"
 	"github.com/w8kerr/delubot/mongo"
-	"github.com/w8kerr/delubot/utils"
 )
 
 // Route holds information about a specific message route handler
@@ -270,16 +270,17 @@ func (m *Mux) OnMessageDelete(ds *discordgo.Session, md *discordgo.MessageDelete
 		channelName = err.Error()
 	}
 
-	message, err := ds.ChannelMessage(md.ChannelID, md.ID)
+	deleted := MessageLog{}
+	err = mlog.Find(bson.M{"message_id": md.ID}).One(&deleted)
 	if err != nil {
-		fmt.Println("Failed to get bulk deleted message: " + err.Error())
+		fmt.Println("Failed to get deleted message: " + err.Error())
 	}
-	utils.PrintJSON(message)
+	log.Printf("DELETED MESSAGE - %s: %s", deleted.UserName, deleted.Content)
 
 	mlog.Insert(MessageLog{
 		ChannelName: channelName,
-		UserName:    "#",
-		Content:     md.Content,
+		UserName:    deleted.UserName,
+		Content:     deleted.Content,
 		MessageID:   md.ID,
 		Action:      "delete",
 		Time:        time.Now(),
@@ -301,15 +302,18 @@ func (m *Mux) OnMessageDeleteBulk(ds *discordgo.Session, mdb *discordgo.MessageD
 	}
 
 	for _, msgID := range mdb.Messages {
-		message, err := ds.ChannelMessage(mdb.ChannelID, msgID)
+		deleted := MessageLog{}
+		err = mlog.Find(bson.M{"message_id": msgID}).One(&deleted)
 		if err != nil {
 			fmt.Println("Failed to get bulk deleted message: " + err.Error())
 		}
+		log.Printf("BULK DELETED MESSAGE - %s: %s", deleted.UserName, deleted.Content)
+
 		mlog.Insert(MessageLog{
 			ChannelName: channelName,
-			UserName:    "#",
-			Content:     message.Content,
-			MessageID:   message.ID,
+			UserName:    deleted.UserName,
+			Content:     deleted.Content,
+			MessageID:   msgID,
 			Action:      "delete",
 			Time:        time.Now(),
 		})
