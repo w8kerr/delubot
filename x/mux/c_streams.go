@@ -276,7 +276,7 @@ func (m *Mux) InitScanForUpdates(ds *discordgo.Session) {
 }
 
 func (m *Mux) ScanForUpdates(ds *discordgo.Session) {
-	fmt.Println("SCAN FOR UPDATES")
+	// fmt.Println("SCAN FOR UPDATES")
 	pruned := []EmbedToUpdate{}
 	for _, etu := range EmbedsToUpdate {
 		if etu.Time.Add(24 * time.Hour).After(time.Now()) {
