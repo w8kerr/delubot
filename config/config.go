@@ -75,6 +75,8 @@ var LogChannels = map[string]string{
 	"755437328515989564": "772322798546321428",
 }
 
+var ErrorChannel = "793361959046217778"
+
 var TimeFormat string
 
 var GoogleCredentials bson.M

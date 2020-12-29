@@ -37,3 +37,22 @@ func GetAllMembers(ds *discordgo.Session, guildID string) ([]*discordgo.Member, 
 
 	return list, nil
 }
+
+type ChannelLogger struct {
+	Session   *discordgo.Session
+	ChannelID string
+}
+
+func (cl ChannelLogger) Write(p []byte) (n int, err error) {
+	_, err = cl.Session.ChannelMessageSend(cl.ChannelID, string(p))
+	return len(p), err
+}
+
+func GetChannelLogger(ds *discordgo.Session, channelID string) *log.Logger {
+	cl := ChannelLogger{
+		Session:   ds,
+		ChannelID: channelID,
+	}
+
+	return log.New(cl, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+}

@@ -77,6 +77,7 @@ func ScanTimeline(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyn
 }
 
 func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig) {
+	cl := utils.GetChannelLogger(ds, config.ErrorChannel)
 	sleepDuration := 3 * time.Second
 	sinceID := ts.SinceID
 
@@ -88,9 +89,10 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			SinceID:    sinceID,
 		})
 		if err != nil {
-			log.Printf("Failed to get Tweet stream, %s", err)
+			cl.Printf("Failed to get Tweet stream, %s", err)
 			continue
 		}
+		cl.Printf("Checked tweets since %d, got %d", sinceID, len(tweets))
 
 		sort.Slice(tweets, func(i, j int) bool {
 			return tweets[i].ID < tweets[j].ID
@@ -113,7 +115,7 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			embed := SyncedTweetToEmbed(st)
 			msg, err := ds.ChannelMessageSendEmbed(ts.ChannelID, embed)
 			if err != nil {
-				log.Printf("Failed to send Tweet %s, %s", tweet.IDStr, err)
+				cl.Printf("Failed to send Tweet %s, %s", tweet.IDStr, err)
 				continue
 			}
 			st.MessageID = msg.ID
@@ -129,7 +131,7 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			sinceID = tweets[0].ID
 			err = config.SetTweetSyncSinceID(ts.Handle, ts.ChannelID, tweets[0].ID)
 			if err != nil {
-				log.Printf("Failed to send Tweet %s, %s", tweet.IDStr, err)
+				cl.Printf("Failed to send Tweet %s, %s", tweet.IDStr, err)
 				continue
 			}
 		}
