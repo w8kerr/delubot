@@ -92,7 +92,6 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			cl.Printf("Failed to get Tweet stream, %s", err)
 			continue
 		}
-		cl.Printf("Checked tweets since %d, got %d", sinceID, len(tweets))
 
 		sort.Slice(tweets, func(i, j int) bool {
 			return tweets[i].ID < tweets[j].ID
