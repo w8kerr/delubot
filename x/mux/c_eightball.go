@@ -66,6 +66,7 @@ func (m *Mux) EightBall(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 		"Very doubtful",
 		"Δ",
 		"There are three sides to everything",
+		"That's Fanbox-only knowledge",
 	}
 	rand.Seed(time.Now().UnixNano())
 
