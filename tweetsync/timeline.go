@@ -235,9 +235,6 @@ func TweetToEmbed(tweet *twitter.Tweet, translation string, translators []string
 func TweetToEmbedOld(tweet *twitter.Tweet, translation string, translators []string) *discordgo.MessageEmbed {
 	createdAt, _ := time.Parse(TwitterTimeFormat, tweet.CreatedAt)
 
-	fmt.Println("TWEET")
-	utils.PrintJSON(tweet)
-
 	// Special Twitter action, make the profile picture bigger
 	parts := strings.Split(tweet.User.ProfileImageURLHttps, "_normal.")
 	if len(parts) == 2 {
