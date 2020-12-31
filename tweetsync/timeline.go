@@ -99,7 +99,7 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 		})
 
 		for _, tweet := range tweets {
-			translation, err := tl.Translate(tweet.Text)
+			translation, err := tl.Translate(tweet.FullText)
 			if err != nil {
 				translation = fmt.Sprintf("[Translation error: %s]", err)
 			}
