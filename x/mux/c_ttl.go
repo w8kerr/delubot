@@ -109,7 +109,6 @@ func (m *Mux) TweetEdit(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 
 	foundChannel := false
 	for _, tsc := range config.TweetSyncChannels {
-		fmt.Println("COMPARE", tsc.ChannelID, dm.ChannelID)
 		if tsc.ChannelID == dm.ChannelID {
 			foundChannel = true
 		}
