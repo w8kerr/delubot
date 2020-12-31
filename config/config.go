@@ -53,6 +53,13 @@ type TweetUpdate struct {
 	Translator     string `json:"translator" bson:"translator"`
 }
 
+type Extraction struct {
+	ChannelID         string   `json:"channel_id" bson:"channel_id"`
+	UserMessageID     string   `json:"user_message_id" bson:"user_message_id"`
+	BotMessageID      string   `json:"bot_message_id" bson:"bot_message_id"`
+	ExtractMessageIDs []string `json:"extract_message_ids" bson:"extract_message_ids"`
+}
+
 var GrantRoles = map[string]RoleConfig{
 	"755437328515989564": { // DFS
 		Alpha:   "760705266953355295",
@@ -92,6 +99,8 @@ var CreatorID = "204752740503650304"
 var TweetSyncChannels = []TweetSyncConfig{}
 
 var TweetUpdates = make(map[string]TweetUpdate)
+
+var Extractions = make(map[string]Extraction)
 
 type BotConfig struct {
 	ModeratorRoles    map[string][]string   `json:"moderator_roles" bson:"moderator_roles"`

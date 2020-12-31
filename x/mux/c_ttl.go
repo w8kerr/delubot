@@ -59,7 +59,7 @@ func (m *Mux) TweetTranslate(ds *discordgo.Session, dm *discordgo.Message, ctx *
 	}
 
 	if ctx.Content == "" {
-		msg := respond(fmt.Sprintf("🔺Usage: -db ttl <translation for oldest untranslated Tweet within 24 hours>\nCurrently pointing to:\n❝ %s ❞", st.Tweet.Text))
+		msg := respond(fmt.Sprintf("🔺Usage: -db ttl <translation for oldest untranslated Tweet within 24 hours>\nCurrently pointing to:\n❝ %s ❞", st.Tweet.FullText))
 		err = ds.MessageReactionAdd(msg.ChannelID, msg.ID, "\u274C")
 		if err != nil {
 			fmt.Printf("Failed to add \u274C reaction, %s\n", err)
@@ -72,7 +72,20 @@ func (m *Mux) TweetTranslate(ds *discordgo.Session, dm *discordgo.Message, ctx *
 		return
 	}
 
-	msg := respond(fmt.Sprintf("🔺Translate:\n❝ %s ❞\nto\n❝ %s ❞", st.Tweet.Text, ctx.Content))
+	fmt.Println("CONTENT:", ctx.Content, ctx.Content == "confirm")
+	if ctx.Content == "confirm" {
+		m.ConfirmTweet(ds, st)
+
+		time.Sleep(1 * time.Second)
+		err := ds.ChannelMessageDelete(st.ChannelID, dm.ID)
+		if err != nil {
+			respond(fmt.Sprintf("🔺Failed to delete message: %s", err))
+			return
+		}
+		return
+	}
+
+	msg := respond(fmt.Sprintf("🔺Translate:\n❝ %s ❞\nto\n❝ %s ❞", st.Tweet.FullText, ctx.Content))
 	err = ds.MessageReactionAdd(msg.ChannelID, msg.ID, "\u2705")
 	if err != nil {
 		fmt.Printf("Failed to add \u2705 reaction, %s\n", err)
@@ -96,6 +109,7 @@ func (m *Mux) TweetEdit(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 
 	foundChannel := false
 	for _, tsc := range config.TweetSyncChannels {
+		fmt.Println("COMPARE", tsc.ChannelID, dm.ChannelID)
 		if tsc.ChannelID == dm.ChannelID {
 			foundChannel = true
 		}
@@ -163,7 +177,7 @@ func (m *Mux) TweetEdit(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 	}
 
 	if len(parts) == 1 {
-		msg := respond(fmt.Sprintf("🔺Usage: -db tedit <number of tweet counting upwards> <translation>\nCurrently pointing to:\n❝ %s ❞", st.Tweet.Text))
+		msg := respond(fmt.Sprintf("🔺Usage: -db tedit <number of tweet counting upwards> <translation>\nCurrently pointing to:\n❝ %s ❞", st.Tweet.FullText))
 		err = ds.MessageReactionAdd(msg.ChannelID, msg.ID, "\u274C")
 		if err != nil {
 			fmt.Printf("Failed to add \u274C reaction, %s\n", err)
@@ -178,7 +192,7 @@ func (m *Mux) TweetEdit(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 
 	ctx.Content = strings.Join(parts[1:], " ")
 
-	msg := respond(fmt.Sprintf("🔺Translate:\n❝ %s ❞\nto\n❝ %s ❞", st.Tweet.Text, ctx.Content))
+	msg := respond(fmt.Sprintf("🔺Translate:\n❝ %s ❞\nto\n❝ %s ❞", st.Tweet.FullText, ctx.Content))
 	err = ds.MessageReactionAdd(msg.ChannelID, msg.ID, "\u2705")
 	if err != nil {
 		fmt.Printf("Failed to add \u2705 reaction, %s\n", err)
@@ -200,6 +214,32 @@ func (m *Mux) TweetEdit(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 func (m *Mux) CancelTweetUpdate(ds *discordgo.Session, tu config.TweetUpdate) {
 	ds.ChannelMessageDelete(tu.ChannelID, tu.UserMessageID)
 	ds.ChannelMessageDelete(tu.ChannelID, tu.BotMessageID)
+}
+
+func (m *Mux) ConfirmTweet(ds *discordgo.Session, st models.SyncedTweet) {
+	session := mongo.MDB.Clone()
+	defer session.Close()
+	session.SetMode(mgo.Strong, false)
+	db := session.DB(mongo.DB_NAME)
+	stCol := db.C("synced_tweets")
+
+	st.HumanTranslated = true
+	st.Translators = []string{st.Translators[0] + " ✓"}
+	st.UpdatedAt = time.Now()
+
+	err := stCol.Update(bson.M{"message_id": st.MessageID}, st)
+	if err != nil {
+		ds.ChannelMessageSend(st.ChannelID, fmt.Sprintf("Error updating tweet: %s", err))
+		return
+	}
+
+	embed := tweetsync.SyncedTweetToEmbed(st)
+
+	_, err = ds.ChannelMessageEditEmbed(st.ChannelID, st.MessageID, embed)
+	if err != nil {
+		ds.ChannelMessageSend(st.ChannelID, fmt.Sprintf("Error updating tweet: %s", err))
+		return
+	}
 }
 
 func (m *Mux) DoTweetUpdate(ds *discordgo.Session, tu config.TweetUpdate) {

@@ -87,6 +87,7 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 		tweets, _, err := tc.Timelines.UserTimeline(&twitter.UserTimelineParams{
 			ScreenName: ts.Handle,
 			SinceID:    sinceID,
+			TweetMode:  "extended",
 		})
 		if err != nil {
 			cl.Printf("Failed to get Tweet stream, %s", err)
@@ -112,11 +113,13 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			}
 
 			embed := SyncedTweetToEmbed(st)
+			// msg, err := ds.ChannelMessageSendEmbed(ts.ChannelID, embed)
 			msg, err := ds.ChannelMessageSendEmbed(ts.ChannelID, embed)
 			if err != nil {
 				cl.Printf("Failed to send Tweet %s, %s", tweet.IDStr, err)
 				continue
 			}
+			st.ChannelID = msg.ChannelID
 			st.MessageID = msg.ID
 
 			// Save to the DB
@@ -127,8 +130,8 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			stCol := db.C("synced_tweets")
 			stCol.Insert(st)
 
-			sinceID = tweets[0].ID
-			err = config.SetTweetSyncSinceID(ts.Handle, ts.ChannelID, tweets[0].ID)
+			sinceID = tweet.ID
+			err = config.SetTweetSyncSinceID(ts.Handle, ts.ChannelID, tweet.ID)
 			if err != nil {
 				cl.Printf("Failed to send Tweet %s, %s", tweet.IDStr, err)
 				continue
@@ -141,7 +144,95 @@ func SyncedTweetToEmbed(st models.SyncedTweet) *discordgo.MessageEmbed {
 	return TweetToEmbed(&st.Tweet, st.Translation, st.Translators)
 }
 
+func WrapTranslation(translation string) string {
+	text := ""
+	linebreak := ""
+	insideTweet := false
+	lines := strings.Split(translation, "\n")
+
+	for _, line := range lines {
+		if len(line) == 0 {
+			text += "\n"
+			continue
+		}
+
+		runes := []rune(line)
+		if runes[0] == '[' && runes[len(runes)-1] == ']' {
+			linebreak = "\n"
+			if insideTweet {
+				text += "```" + linebreak
+				insideTweet = false
+			} else {
+				text += linebreak
+			}
+		} else {
+			if !insideTweet {
+				insideTweet = true
+				text += linebreak + "```"
+			} else {
+				text += linebreak
+			}
+		}
+
+		if !insideTweet {
+			text += "*" + line + "*"
+		} else {
+			text += line
+		}
+
+		linebreak = "\n"
+	}
+
+	if !insideTweet {
+		text += linebreak
+	} else {
+		text += "```"
+	}
+
+	fmt.Println("TRANSLATION TEXT")
+	fmt.Println(text)
+
+	return text
+}
+
 func TweetToEmbed(tweet *twitter.Tweet, translation string, translators []string) *discordgo.MessageEmbed {
+	createdAt, _ := time.Parse(TwitterTimeFormat, tweet.CreatedAt)
+
+	fmt.Println("TWEET")
+	utils.PrintJSON(tweet)
+
+	// Special Twitter action, make the profile picture bigger
+	parts := strings.Split(tweet.User.ProfileImageURLHttps, "_normal.")
+	if len(parts) == 2 {
+		tweet.User.ProfileImageURLHttps = parts[0] + "_400x400." + parts[1]
+	}
+
+	sourceParts := strings.Split(tweet.Source, "\u003e")
+	if len(sourceParts) > 2 {
+		sourceParts2 := strings.Split(sourceParts[1], "\u003c")
+		tweet.Source = sourceParts2[0]
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Color: 3066993,
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: tweet.User.ProfileImageURLHttps,
+		},
+		Author: &discordgo.MessageEmbedAuthor{
+			Name: fmt.Sprintf("%s\n@%s", tweet.User.Name, tweet.User.ScreenName),
+			URL:  fmt.Sprintf("https://twitter.com/%s", tweet.User.ScreenName),
+		},
+		Description: fmt.Sprintf("[Status: %s](https://twitter.com/%s/status/%s)\n──────────────\n%s\n*TL: %s*\n──────────────\n%s\n\n*Original*", tweet.IDStr, tweet.User.ScreenName, tweet.IDStr, WrapTranslation(translation), strings.Join(translators, ", "), tweet.FullText),
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: tweet.Source,
+		},
+		Timestamp: createdAt.Format(time.RFC3339),
+	}
+
+	return embed
+}
+
+func TweetToEmbedOld(tweet *twitter.Tweet, translation string, translators []string) *discordgo.MessageEmbed {
 	createdAt, _ := time.Parse(TwitterTimeFormat, tweet.CreatedAt)
 
 	fmt.Println("TWEET")

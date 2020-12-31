@@ -2,6 +2,7 @@ package utils
 
 import (
 	"log"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -55,4 +56,26 @@ func GetChannelLogger(ds *discordgo.Session, channelID string) *log.Logger {
 	}
 
 	return log.New(cl, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+}
+
+func OutputTextToFile(ds *discordgo.Session, channelID, filename, text string) {
+	reader := strings.NewReader(text)
+	ds.ChannelFileSend(channelID, filename, reader)
+}
+
+func BulkDeleteMessages(ds *discordgo.Session, channelID string, messageIDs []string) error {
+	for len(messageIDs) > 100 {
+		batch := messageIDs[0:99]
+		err := ds.ChannelMessagesBulkDelete(channelID, batch)
+		if err != nil {
+			return err
+		}
+		messageIDs = messageIDs[100:]
+	}
+
+	err := ds.ChannelMessagesBulkDelete(channelID, messageIDs)
+	if err != nil {
+		return err
+	}
+	return nil
 }

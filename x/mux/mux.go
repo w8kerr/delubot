@@ -385,6 +385,15 @@ func (m *Mux) AddReaction(ds *discordgo.Session, ra *discordgo.MessageReactionAd
 			m.CancelTweetUpdate(ds, tu)
 		}
 	}
+
+	if e, ok := config.Extractions[ra.MessageID]; ok {
+		if ra.Emoji.Name == "🇾" {
+			m.DoExtraction(ds, e)
+		}
+		if ra.Emoji.Name == "🇳" {
+			m.CancelExtraction(ds, e)
+		}
+	}
 }
 
 func (m *Mux) RemoveReaction(ds *discordgo.Session, rr *discordgo.MessageReactionRemove) {

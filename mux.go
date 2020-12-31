@@ -57,6 +57,7 @@ func init() {
 		Router.Route("ttl", "Provide translation for the most recent untranslated tweet in a Twitter feed channel", Router.TweetTranslate)
 		Router.Route("tedit", "Provide translation for the nth tweet (counting upwards) in a Twitter feed channel", Router.TweetEdit)
 		Router.Route("tl", "Translate from Japanese to English", Router.Translate)
+		Router.Route("extractmessages", "Delete an entire segment of chat messages, in between two messages that match a given pattern", Router.ExtractMessages)
 	}
 	// Commands for both remote and dev
 
