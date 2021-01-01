@@ -90,30 +90,30 @@ func SafeAccessor(values [][]interface{}) func(int, int) string {
 	}
 }
 
-func GetCurrentPage(svc *sheets.Service, sheetID string) (*sheets.Sheet, bool, error) {
-	sheet, _, removeTime, _, err := DoGetCurrentPage(svc, sheetID)
+func GetCurrentPage(svc *sheets.Service, sheetID string) (*sheets.Sheet, string, bool, error) {
+	sheet, _, removeTime, _, channelID, err := DoGetCurrentPage(svc, sheetID)
 	if err != nil {
-		return sheet, false, err
+		return sheet, "", false, err
 	}
 
 	now := config.Now()
 	// fmt.Println("Start:", config.PrintTime(grantTime), "End:", config.PrintTime(endTime), config.PrintTime(now))
 	// fmt.Println("Found current page:", sheet.Properties.Title)
-	return sheet, now.After(removeTime), nil
+	return sheet, channelID, now.After(removeTime), nil
 }
 
-func DoGetCurrentPage(svc *sheets.Service, sheetID string) (*sheets.Sheet, time.Time, time.Time, time.Time, error) {
+func DoGetCurrentPage(svc *sheets.Service, sheetID string) (*sheets.Sheet, time.Time, time.Time, time.Time, string, error) {
 	resp, err := svc.Spreadsheets.Get(sheetID).Do()
 	if err != nil {
-		return &sheets.Sheet{}, time.Time{}, time.Time{}, time.Time{}, err
+		return &sheets.Sheet{}, time.Time{}, time.Time{}, time.Time{}, "", err
 	}
 
 	for _, sheet := range resp.Sheets {
 		// fmt.Println(sheet.Properties.Title, sheet.Properties.SheetId)
-		r := fmt.Sprintf("'%s'!B1:B3", sheet.Properties.Title)
+		r := fmt.Sprintf("'%s'!B1:C3", sheet.Properties.Title)
 		resp2, err := svc.Spreadsheets.Values.Get(sheetID, r).Do()
 		if err != nil {
-			return &sheets.Sheet{}, time.Time{}, time.Time{}, time.Time{}, err
+			return &sheets.Sheet{}, time.Time{}, time.Time{}, time.Time{}, "", err
 		}
 
 		vals := SafeAccessor(resp2.Values)
@@ -121,13 +121,14 @@ func DoGetCurrentPage(svc *sheets.Service, sheetID string) (*sheets.Sheet, time.
 		grantTime := config.ParseTime(vals(0, 0))
 		removeTime := config.ParseTime(vals(1, 0))
 		endTime := config.ParseTime(vals(2, 0))
+		channelID := vals(1, 1)
 		now := config.Now()
 
 		if now.After(grantTime) && now.Before(endTime) {
-			return sheet, grantTime, removeTime, endTime, nil
+			return sheet, grantTime, removeTime, endTime, channelID, nil
 		}
 	}
-	return &sheets.Sheet{}, time.Time{}, time.Time{}, time.Time{}, errors.New("Not found")
+	return &sheets.Sheet{}, time.Time{}, time.Time{}, time.Time{}, "", errors.New("Not found")
 }
 
 func HasAccess(sheetID string) bool {
@@ -218,7 +219,7 @@ func ReadAllAutomatic(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) 
 		}
 		plan, _ := strconv.Atoi(vals(i, 3))
 		if plan == 0 {
-			plan = 500
+			plan = 400
 		}
 		rowIndex := i + 7
 		rr := RowRange{
@@ -260,7 +261,7 @@ func ReadAllManual(svc *sheets.Service, sheetID string, sheet *sheets.Sheet) ([]
 		}
 		plan, _ := strconv.Atoi(vals(i, 4))
 		if plan == 0 {
-			plan = 500
+			plan = 400
 		}
 
 		rowIndex := i + 7
@@ -346,16 +347,16 @@ func MapRows(rows []RoleRow) map[string]RoleRow {
 	return m
 }
 
-func AddManualVerification(svc *sheets.Service, sheetID, handle, userID, proof string, plan int, verifiedBy string) error {
-	page, _, err := GetCurrentPage(svc, sheetID)
+func AddManualVerification(svc *sheets.Service, sheetID, handle, userID, proof string, plan int, verifiedBy string) (string, error) {
+	page, channelID, _, err := GetCurrentPage(svc, sheetID)
 	if err != nil {
-		return err
+		return channelID, err
 	}
 
 	r := fmt.Sprintf("'%s'!G7:G%d", page.Properties.Title, page.Properties.GridProperties.RowCount)
 	resp, err := svc.Spreadsheets.Values.Get(sheetID, r).Do()
 	if err != nil {
-		return err
+		return channelID, err
 	}
 	vals := SafeAccessor(resp.Values)
 
@@ -391,15 +392,15 @@ func AddManualVerification(svc *sheets.Service, sheetID, handle, userID, proof s
 
 	_, err = svc.Spreadsheets.Values.Update(sheetID, r, vr).ValueInputOption("RAW").Do()
 	if err != nil {
-		return err
+		return channelID, err
 	}
 
 	err = UpdateFormatting(svc, sheetID, []*sheets.Request{colorReq})
 	if err != nil {
-		return err
+		return channelID, err
 	}
 
-	return nil
+	return channelID, nil
 }
 
 func UpdateHandle(svc *sheets.Service, sheetID string, page *sheets.Sheet, row RoleRow, newHandle string) error {

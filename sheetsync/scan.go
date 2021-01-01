@@ -80,7 +80,7 @@ func SyncGuild(svc *sheets.Service, guildID string) {
 	roleRemove := config.RoleRemoveIsEnabled(guildID)
 
 	sheetID := config.SyncSheet(guildID)
-	page, doRemove, err := GetCurrentPage(svc, sheetID)
+	page, _, doRemove, err := GetCurrentPage(svc, sheetID)
 	if err != nil {
 		log.Printf("%s - Couldn't get the current page, %s", guildID, err)
 		return
@@ -278,7 +278,7 @@ func DoSyncGuild(svc *sheets.Service, guildID string, sheetID string, page *shee
 				updated := false
 				failed := false
 				var color sheets.Color
-				if entry.Plan >= 500 {
+				if entry.Plan >= 400 {
 					ensureAlpha(member, entry, &errors, &updated, &failed)
 					color = GreenHighlight
 				}
@@ -301,7 +301,7 @@ func DoSyncGuild(svc *sheets.Service, guildID string, sheetID string, page *shee
 					formatReqs = append(formatReqs, entry.ColorRequest(color))
 				}
 				if updated && !failed {
-					if entry.Plan >= 500 {
+					if entry.Plan >= 400 {
 						gaveAlpha = append(gaveAlpha, entry)
 					}
 					if entry.Plan >= 1500 {

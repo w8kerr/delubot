@@ -198,6 +198,23 @@ type SyncedTweet struct {
 	HumanTranslated bool          `json:"human_translated" bson:"human_translated"`
 }
 
+// WatchedVideo Record a video that should be scanned for new comments
+type WatchedVideo struct {
+	OID       bson.ObjectId `json:"_id" bson:"_id,omitempty"`
+	VideoID   string        `json:"video_id" bson:"video_id"`
+	LastScan  time.Time     `json:"last_scan" bson:"last_scan"`
+	ChannelID string        `json:"channel_id" bson:"channel_id"`
+}
+
+type YoutubeComment struct {
+	AuthorDisplayName     string
+	AuthorProfileImageURL string
+	Text                  string
+	ReplyDisplayName      string
+	ReplyText             string
+	UpdatedAt             time.Time
+}
+
 // BTableOptions holds metadata about how to sort and paginate a query for a
 // Bootstrap-Vue table provider
 type BTableOptions struct {

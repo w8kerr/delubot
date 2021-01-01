@@ -55,7 +55,7 @@ func (m *Mux) SyncSheet(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 		return
 	}
 
-	sheet, grantTime, removeTime, endTime, err := sheetsync.DoGetCurrentPage(svc, syncSheet)
+	sheet, grantTime, removeTime, endTime, channelID, err := sheetsync.DoGetCurrentPage(svc, syncSheet)
 	if err != nil {
 		resp := fmt.Sprintf("Could not access the sheet ID `%s`\n", ctx.Content)
 		resp += "Error: `" + err.Error() + "`"
@@ -63,11 +63,18 @@ func (m *Mux) SyncSheet(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 		return
 	}
 
+	channelName := fmt.Sprintf("Error: No channel %s found", channelID)
+	channel, err := ds.Channel(channelID)
+	if err == nil {
+		channelName = channel.Name
+	}
+
 	resp := fmt.Sprintf("```Sync from Google Sheet: %s", syncSheet)
 	resp += fmt.Sprintf("\nCurrent month's page:   %s", sheet.Properties.Title)
 	resp += fmt.Sprintf("\nStart granting roles:   %s", config.PrintTime(grantTime))
 	resp += fmt.Sprintf("\nStart removing roles:   %s", config.PrintTime(removeTime))
 	resp += fmt.Sprintf("\nEnd of sync:            %s", config.PrintTime(endTime))
+	resp += fmt.Sprintf("\nLog channel:            %s", channelName)
 	if config.RoleGrantIsEnabled(dm.GuildID) {
 		resp += "\nRole granting:          Enabled"
 	} else {

@@ -46,7 +46,7 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 	parts := strings.Split(planStr, " ")
 	plan, _ := strconv.Atoi(parts[0])
 	if plan == 0 {
-		plan = 500
+		plan = 400
 	}
 
 	if len(parts) > 1 {
@@ -63,7 +63,7 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 	formerRoleError := false
 
 	edit("```🔺Granting roles...```")
-	if plan >= 500 {
+	if plan >= 400 {
 		alphaRole := config.AlphaRole(dm.GuildID)
 		if alphaRole == "" {
 			edit("```Could not verify, no Alpha role is configured```")
@@ -118,28 +118,27 @@ func (m *Mux) Verify(ds *discordgo.Session, dm *discordgo.Message, ctx *Context)
 		edit("```Could not verify, failed to connect to Google Sheet, " + err.Error() + "```")
 		return
 	}
-	err = sheetsync.AddManualVerification(sheetSvc, sheetID, handle, userID, proof, plan, dm.Author.Username)
+	channelID, err := sheetsync.AddManualVerification(sheetSvc, sheetID, handle, userID, proof, plan, dm.Author.Username)
 	if err != nil {
 		edit("```Could not verify, error updating Google Sheet, " + err.Error() + "```")
 		return
 	}
 
 	edit("```🔺Recording log...```")
-	logChanID := config.LogChannel(dm.GuildID)
-	if logChanID != "" {
+	if channelID != "" {
 		logResp := "Handle:   " + handle
 		logResp += "\nID:            " + userID
 		logResp += "\nProof:      " + proof
 		logResp += fmt.Sprintf("\nPlan:         %d", plan)
 		logResp += "\nVerified:  " + dm.Author.Username
-		_, err := ds.ChannelMessageSend(logChanID, logResp)
+		_, err := ds.ChannelMessageSend(channelID, logResp)
 		if err != nil {
 			log.Println("Failed to send log channel msg,", err)
 		}
 	}
 
 	resp := "```🔺Verification recorded"
-	if plan >= 500 {
+	if plan >= 400 {
 		resp += "\nAlpha role granted to   " + handle
 	}
 	if plan >= 1500 {
