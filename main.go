@@ -20,7 +20,6 @@ import (
 	"github.com/w8kerr/delubot/sheetsync"
 	"github.com/w8kerr/delubot/tl"
 	"github.com/w8kerr/delubot/tweetsync"
-	"github.com/w8kerr/delubot/youtubesvc"
 )
 
 // Version is a constant that stores the Disgord version information.
@@ -107,8 +106,8 @@ func main() {
 	sheetsync.Init(Session)
 	go sheetsync.Sweeper()
 
-	youtubesvc.InitSweeper(Session)
-	go youtubesvc.Sweeper()
+	// youtubesvc.InitSweeper(Session)
+	// go youtubesvc.Sweeper()
 
 	go Router.InitScanForUpdates(Session)
 
