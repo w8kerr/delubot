@@ -220,14 +220,15 @@ func DoSyncGuild(svc *sheets.Service, guildID string, sheetID string, page *shee
 		log.Printf("%s - Failed to read automatic Sheet rows, %s", guildID, err)
 		return
 	}
-	// log.Printf("%s - Got %d automatic entries", guildID, len(entries))
+	log.Printf("Sheet - %s - %s", sheetID, page.Properties.Title)
+	log.Printf("%s - Got %d automatic entries", guildID, len(entries))
 
 	manualEntries, err := ReadAllManual(svc, sheetID, page)
 	if err != nil {
 		log.Printf("%s - Failed to read manual Sheet rows, %s", guildID, err)
 		return
 	}
-	// log.Printf("%s - Got %d manual entries", guildID, len(manualEntries))
+	log.Printf("%s - Got %d manual entries", guildID, len(manualEntries))
 
 	entries = append(entries, manualEntries...)
 	entryMap := MapRows(entries)
