@@ -40,7 +40,7 @@ func (m *Mux) TestSync(ds *discordgo.Session, dm *discordgo.Message, ctx *Contex
 		return
 	}
 
-	page, _, err := sheetsync.GetCurrentPage(svc, sheetID)
+	page, _, _, err := sheetsync.GetCurrentPage(svc, sheetID)
 	if err != nil {
 		log.Printf("%s - Couldn't get the current page, %s", dm.GuildID, err)
 		return
