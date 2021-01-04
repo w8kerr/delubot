@@ -215,6 +215,16 @@ type YoutubeComment struct {
 	UpdatedAt             time.Time
 }
 
+type Sticky struct {
+	OID             bson.ObjectId `json:"_id" bson:"_id,omitempty"`
+	AuthorName      string        `json:"author_name" bson:"author_name"`
+	AuthorAvatarURL string        `json:"author_avatar_url" bson:"author_avatar_url"`
+	ChannelID       string        `json:"channel_id" bson:"channel_id"`
+	MessageID       string        `json:"message_id" bson:"message_id"`
+	Text            string        `json:"text" bson:"text"`
+	Time            time.Time     `json:"time" bson:"time"`
+}
+
 // BTableOptions holds metadata about how to sort and paginate a query for a
 // Bootstrap-Vue table provider
 type BTableOptions struct {

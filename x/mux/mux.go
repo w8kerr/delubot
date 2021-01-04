@@ -125,6 +125,11 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 	defer session.Close()
 	db := session.DB(mongo.DB_NAME)
 
+	abort := m.EnsureSticky(db, ds, mc.Message)
+	if abort {
+		return
+	}
+
 	m.LogMessageCreate(db, ds, mc, nil)
 
 	var err error
