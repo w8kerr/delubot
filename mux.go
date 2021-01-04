@@ -58,8 +58,8 @@ func init() {
 		Router.Route("tedit", "Provide translation for the nth tweet (counting upwards) in a Twitter feed channel", Router.TweetEdit)
 		Router.Route("tl", "Translate from Japanese to English", Router.Translate)
 		// Router.Route("extractmessages", "Delete an entire segment of chat messages, in between two messages that match a given pattern", Router.ExtractMessages)
-		Router.Route("sticky", "Make a message stay at the bottom of the chat", Router.Sticky)
-		Router.Route("unsticky", "Stop promoting the sticky in the current channel", Router.Unsticky)
+		// Router.Route("sticky", "Make a message stay at the bottom of the chat", Router.Sticky)
+		// Router.Route("unsticky", "Stop promoting the sticky in the current channel", Router.Unsticky)
 	}
 	// Commands for both remote and dev
 
