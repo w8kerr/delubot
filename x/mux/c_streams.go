@@ -50,12 +50,13 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 		return
 	}
 
+	ytSvc, err := youtubesvc.NewYoutubeService(c)
+	if err != nil {
+		respond("🔺Could not connect to Youtube, " + err.Error())
+		return
+	}
+
 	if len(recs) > 0 {
-		ytSvc, err := youtubesvc.NewYoutubeService(c)
-		if err != nil {
-			respond("🔺Could not connect to Youtube")
-			return
-		}
 		for i, rec := range recs {
 			scheduledTime, _, snippet, err := ytSvc.GetStreamInfo(rec.YoutubeID)
 			if err != nil {
@@ -66,6 +67,14 @@ func (m *Mux) Streams(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 			recs[i].StreamThumbnail = snippet.Thumbnails.High.Url
 		}
 	}
+
+	liveRecs, err := ytSvc.ListUpcomingStreams("UC7YXqPO3eUnxbJ6rN0z2z1Q")
+	if err != nil {
+		respond("🔺Could not check upcoming Youtube streams, " + err.Error())
+		return
+	}
+
+	recs = append(liveRecs, recs...)
 
 	schedCol := db.C("scheduled_streams")
 	schedStreams := []ManualStream{}
