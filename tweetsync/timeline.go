@@ -112,15 +112,19 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 				HumanTranslated: false,
 			}
 
-			embed := SyncedTweetToEmbed(st)
-			// msg, err := ds.ChannelMessageSendEmbed(ts.ChannelID, embed)
-			msg, err := ds.ChannelMessageSendEmbed(ts.ChannelID, embed)
-			if err != nil {
-				cl.Printf("Failed to send Tweet %s, %s", tweet.IDStr, err)
-				continue
+			if strings.HasPrefix(tweet.FullText, "@tos") {
+				st.HumanTranslated = true
+			} else {
+				embed := SyncedTweetToEmbed(st)
+				// msg, err := ds.ChannelMessageSendEmbed(ts.ChannelID, embed)
+				msg, err := ds.ChannelMessageSendEmbed(ts.ChannelID, embed)
+				if err != nil {
+					cl.Printf("Failed to send Tweet %s, %s", tweet.IDStr, err)
+					continue
+				}
+				st.ChannelID = msg.ChannelID
+				st.MessageID = msg.ID
 			}
-			st.ChannelID = msg.ChannelID
-			st.MessageID = msg.ID
 
 			// Save to the DB
 			session := mongo.MDB.Clone()
