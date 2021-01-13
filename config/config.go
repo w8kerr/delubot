@@ -39,9 +39,10 @@ type RoleConfig struct {
 }
 
 type TweetSyncConfig struct {
-	Handle    string `json:"handle" bson:"handle"`
-	ChannelID string `json:"channel_id" bson:"channel_id"`
-	SinceID   int64  `json:"since_id" bson:"since_id"`
+	Handle           string `json:"handle" bson:"handle"`
+	ChannelID        string `json:"channel_id" bson:"channel_id"`
+	ControlChannelID string `json:"control_channel_id" bson:"control_channel_id"`
+	SinceID          int64  `json:"since_id" bson:"since_id"`
 }
 
 type TweetUpdate struct {
@@ -474,6 +475,16 @@ func SetTweetSyncSinceID(handle, channelID string, sinceID int64) error {
 	}
 
 	TweetSyncChannels = config.TweetSyncChannels
+	return nil
+}
+
+func MaybeGetTweetConfig(channelID string) *TweetSyncConfig {
+	for _, c := range TweetSyncChannels {
+		if c.ControlChannelID == channelID {
+			return &c
+		}
+	}
+
 	return nil
 }
 

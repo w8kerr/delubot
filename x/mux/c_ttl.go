@@ -13,6 +13,7 @@ import (
 	"github.com/w8kerr/delubot/models"
 	"github.com/w8kerr/delubot/mongo"
 	"github.com/w8kerr/delubot/tweetsync"
+	"github.com/w8kerr/delubot/utils"
 )
 
 func (m *Mux) TweetTranslate(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
@@ -241,6 +242,69 @@ func (m *Mux) ConfirmTweet(ds *discordgo.Session, st models.SyncedTweet) {
 	}
 }
 
+func (m *Mux) DoTweetUpdateByReply(ds *discordgo.Session, dm *discordgo.Message, ref *discordgo.MessageReference) {
+	session := mongo.MDB.Clone()
+	defer session.Close()
+	session.SetMode(mgo.Strong, false)
+	db := session.DB(mongo.DB_NAME)
+	stCol := db.C("synced_tweets")
+
+	fmt.Println("DOTWEETUPDATEBYREPLY")
+	utils.PrintJSON(dm)
+
+	controlChannelID := ref.ChannelID
+	controlMessageID := ref.MessageID
+
+	st := models.SyncedTweet{}
+	err := stCol.Find(bson.M{"control_message_id": controlMessageID}).One(&st)
+	if err != nil {
+		ds.ChannelMessageSend(controlChannelID, fmt.Sprintf("Error updating tweet: %s", err))
+		return
+	}
+
+	if !st.HumanTranslated {
+		st.HumanTranslated = true
+		st.Translators = []string{}
+	}
+
+	st.Translation = dm.Content
+	found := false
+	for _, t := range st.Translators {
+		if t == dm.Author.Username {
+			found = true
+		}
+	}
+	if !found {
+		st.Translators = append(st.Translators, dm.Author.Username)
+	}
+	st.UpdatedAt = time.Now()
+
+	err = stCol.Update(bson.M{"message_id": st.MessageID}, st)
+	if err != nil {
+		ds.ChannelMessageSend(controlChannelID, fmt.Sprintf("Error updating tweet: %s", err))
+		return
+	}
+
+	embed := tweetsync.SyncedTweetToEmbed(st)
+
+	_, err = ds.ChannelMessageEditEmbed(st.ChannelID, st.MessageID, embed)
+	if err != nil {
+		ds.ChannelMessageSend(st.ControlChannelID, fmt.Sprintf("Error updating tweet: %s", err))
+		return
+	}
+
+	_, err = ds.ChannelMessageEditEmbed(st.ControlChannelID, st.ControlMessageID, embed)
+	if err != nil {
+		ds.ChannelMessageSend(st.ControlChannelID, fmt.Sprintf("Error updating tweet: %s", err))
+		return
+	}
+
+	err = ds.MessageReactionAdd(dm.ChannelID, dm.ID, "\U0001F44D")
+	if err != nil {
+		fmt.Printf("Failed to add \U0001F44D reaction, %s\n", err)
+	}
+}
+
 func (m *Mux) DoTweetUpdate(ds *discordgo.Session, tu config.TweetUpdate) {
 	session := mongo.MDB.Clone()
 	defer session.Close()
@@ -284,6 +348,14 @@ func (m *Mux) DoTweetUpdate(ds *discordgo.Session, tu config.TweetUpdate) {
 	if err != nil {
 		ds.ChannelMessageSend(tu.ChannelID, fmt.Sprintf("Error updating tweet: %s", err))
 		return
+	}
+
+	if st.ControlMessageID != "" {
+		_, err = ds.ChannelMessageEditEmbed(tu.ChannelID, st.ControlMessageID, embed)
+		if err != nil {
+			ds.ChannelMessageSend(tu.ChannelID, fmt.Sprintf("Error updating tweet: %s", err))
+			return
+		}
 	}
 
 	ds.ChannelMessageDelete(tu.ChannelID, tu.UserMessageID)

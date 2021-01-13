@@ -187,15 +187,17 @@ type YoutubeStreamRecord struct {
 
 // SyncedTweet Record of a tweet that was echoed from Twitter into Discord
 type SyncedTweet struct {
-	OID             bson.ObjectId `json:"_id" bson:"_id,omitempty"`
-	ChannelID       string        `json:"channel_id" bson:"channel_id"`
-	MessageID       string        `json:"message_id" bson:"message_id"`
-	Tweet           twitter.Tweet `json:"tweet" bson:"tweet"`
-	Translation     string        `json:"translation" bson:"translation"`
-	CreatedAt       time.Time     `json:"created_at" bson:"created_at"`
-	UpdatedAt       time.Time     `json:"updated_at" bson:"updated_at"`
-	Translators     []string      `json:"translators" bson:"translators"`
-	HumanTranslated bool          `json:"human_translated" bson:"human_translated"`
+	OID              bson.ObjectId `json:"_id" bson:"_id,omitempty"`
+	ChannelID        string        `json:"channel_id" bson:"channel_id"`
+	MessageID        string        `json:"message_id" bson:"message_id"`
+	ControlChannelID string        `json:"control_channel_id" bson:"control_channel_id"`
+	ControlMessageID string        `json:"control_message_id" bson:"control_message_id"`
+	Tweet            twitter.Tweet `json:"tweet" bson:"tweet"`
+	Translation      string        `json:"translation" bson:"translation"`
+	CreatedAt        time.Time     `json:"created_at" bson:"created_at"`
+	UpdatedAt        time.Time     `json:"updated_at" bson:"updated_at"`
+	Translators      []string      `json:"translators" bson:"translators"`
+	HumanTranslated  bool          `json:"human_translated" bson:"human_translated"`
 }
 
 // WatchedVideo Record a video that should be scanned for new comments

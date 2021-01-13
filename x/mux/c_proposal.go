@@ -17,7 +17,7 @@ func (m *Mux) Proposal(ds *discordgo.Session, dm *discordgo.Message, ctx *Contex
 }
 
 func (m *Mux) UpdateProposal(ds *discordgo.Session, guildID, channelID, messageID string) {
-	users, err := ds.MessageReactions(channelID, messageID, Triangle, 100)
+	users, err := ds.MessageReactions(channelID, messageID, Triangle, 100, "", "")
 	if err != nil {
 		fmt.Println("ERROR GETTING REACTIONS ON PROPOSAL", channelID, messageID, err.Error())
 	}

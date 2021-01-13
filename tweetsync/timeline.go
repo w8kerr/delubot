@@ -124,6 +124,16 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 				}
 				st.ChannelID = msg.ChannelID
 				st.MessageID = msg.ID
+
+				if ts.ControlChannelID != "" {
+					cmsg, err := ds.ChannelMessageSendEmbed(ts.ControlChannelID, embed)
+					if err != nil {
+						cl.Printf("Failed to send control Tweet %s, %s", tweet.IDStr, err)
+						continue
+					}
+					st.ControlChannelID = cmsg.ChannelID
+					st.ControlMessageID = cmsg.ID
+				}
 			}
 
 			// Save to the DB

@@ -6,7 +6,6 @@ package mux
 import (
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 
@@ -132,6 +131,33 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 
 	m.LogMessageCreate(db, ds, mc, nil)
 
+	fmt.Println("Got message", mc.Message.MessageReference, mc.Message.MessageReference != nil)
+	if mc.Message.MessageReference != nil {
+		// Get the highest message up the reply chain, and check if it was the bot
+		wasBotReply := false
+		ref := mc.Message.MessageReference
+		for {
+			msg, err := ds.ChannelMessage(ref.ChannelID, ref.MessageID)
+			if err != nil {
+				log.Printf("Failed to get reply message: %s", err)
+				break
+			}
+			if msg.MessageReference == nil {
+				wasBotReply = msg.Author.ID == ds.State.User.ID
+				break
+			}
+			ref = msg.MessageReference
+		}
+
+		if wasBotReply {
+			tweetConfig := config.MaybeGetTweetConfig(ref.ChannelID)
+			if tweetConfig != nil {
+				m.DoTweetUpdateByReply(ds, mc.Message, ref)
+				return
+			}
+		}
+	}
+
 	var err error
 
 	// Ignore all messages created by the Bot account itself
@@ -200,29 +226,29 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 	}
 
 	// Detect @name or @nick mentions
-	if !ctx.IsDirected {
+	// if !ctx.IsDirected && mc.Mentions != nil {
 
-		// Detect if Bot was @mentioned
-		for _, v := range mc.Mentions {
+	// 	// Detect if Bot was @mentioned
+	// 	for _, v := range mc.Mentions {
 
-			if v.ID == ds.State.User.ID {
+	// 		if v.ID == ds.State.User.ID {
 
-				ctx.IsDirected, ctx.HasMention = true, true
+	// 			ctx.IsDirected, ctx.HasMention = true, true
 
-				reg := regexp.MustCompile(fmt.Sprintf("<@!?(%s)>", ds.State.User.ID))
+	// 			reg := regexp.MustCompile(fmt.Sprintf("<@!?(%s)>", ds.State.User.ID))
 
-				// Was the @mention the first part of the string?
-				if reg.FindStringIndex(ctx.Content)[0] == 0 {
-					ctx.HasMentionFirst = true
-				}
+	// 			// Was the @mention the first part of the string?
+	// 			if reg.FindStringIndex(ctx.Content)[0] == 0 {
+	// 				ctx.HasMentionFirst = true
+	// 			}
 
-				// strip bot mention tags from content string
-				ctx.Content = reg.ReplaceAllString(ctx.Content, "")
+	// 			// strip bot mention tags from content string
+	// 			ctx.Content = reg.ReplaceAllString(ctx.Content, "")
 
-				break
-			}
-		}
-	}
+	// 			break
+	// 		}
+	// 	}
+	// }
 
 	// Detect prefix mention
 	if !ctx.IsDirected && len(m.Prefix) > 0 {
