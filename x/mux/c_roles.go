@@ -487,5 +487,5 @@ func (m *Mux) MuteRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Contex
 		}
 	}
 
-	respond("No Former Member role is configured")
+	respond("No Mute role is configured")
 }
