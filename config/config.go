@@ -36,6 +36,7 @@ type RoleConfig struct {
 	Special string `json:"special" bson:"special"`
 	Whale   string `json:"whale" bson:"whale"`
 	Former  string `json:"former" bson:"former"`
+	Mute    string `json:"mute" bson:"mute"`
 }
 
 type TweetSyncConfig struct {
@@ -259,6 +260,17 @@ func FormerRole(guildID string) string {
 	return guildRoles.Former
 }
 
+// MuteRole get the designated muted role for the given guild
+func MuteRole(guildID string) string {
+	guildRoles, ok := GrantRoles[guildID]
+	if !ok {
+		log.Printf("Could not find guild roles, %s", guildID)
+		return ""
+	}
+
+	return guildRoles.Mute
+}
+
 // ModmailCategory get the designated modmail category ID for the given guild
 func ModmailCategory(guildID string) string {
 	catID, ok := ModmailCategories[guildID]
@@ -382,6 +394,29 @@ func SetFormerRole(guildID, roleID string) error {
 	} else {
 		GrantRoles[guildID] = RoleConfig{
 			Former: roleID,
+		}
+	}
+
+	return nil
+}
+
+func SetMuteRole(guildID, roleID string) error {
+	key := fmt.Sprintf("grant_roles.%s.mute", guildID)
+	update := bson.M{
+		key: roleID,
+	}
+
+	err := UpdateConfig(update)
+	if err != nil {
+		return err
+	}
+
+	if v, ok := GrantRoles[guildID]; ok {
+		v.Mute = roleID
+		GrantRoles[guildID] = v
+	} else {
+		GrantRoles[guildID] = RoleConfig{
+			Mute: roleID,
 		}
 	}
 

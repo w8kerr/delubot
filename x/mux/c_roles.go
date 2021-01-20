@@ -431,3 +431,61 @@ func (m *Mux) FormerRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Cont
 
 	respond("No Former Member role is configured")
 }
+
+func (m *Mux) MuteRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
+	respond := GetResponder(ds, dm)
+
+	roles, err := ds.GuildRoles(dm.GuildID)
+	if err != nil {
+		respond(err.Error())
+		return
+	}
+
+	ctx.Content = strings.TrimPrefix(ctx.Content, "muterole")
+	ctx.Content = strings.TrimSpace(ctx.Content)
+	if ctx.Content == "clear" {
+		err = config.SetFormerRole(dm.GuildID, "")
+		if err != nil {
+			respond(fmt.Sprintf("Failed to clear mute role, %s", err))
+			return
+		}
+
+		respond("Mute role cleared")
+		return
+	} else if ctx.Content != "" {
+		roleID := ""
+		roleName := ""
+		for _, role := range roles {
+			if role.ID == ctx.Content || role.Name == ctx.Content {
+				roleID = role.ID
+				roleName = role.Name
+				break
+			}
+		}
+
+		if roleID == "" {
+			respond(fmt.Sprintf("No role found matching ID or Name `%s`", ctx.Content))
+			return
+		}
+
+		err = config.SetMuteRole(dm.GuildID, roleID)
+		if err != nil {
+			respond(fmt.Sprintf("Failed to set mute role, %s", err))
+			return
+		}
+
+		respond(fmt.Sprintf("Mute role set to %s (`%s`)", roleName, roleID))
+		return
+	}
+
+	muteRoleID := config.MuteRole(dm.GuildID)
+	for _, role := range roles {
+		if role.ID == muteRoleID {
+			resp := fmt.Sprintf("Mute role: %s (`%s`)", role.Name, role.ID)
+			respond(resp)
+			return
+		}
+	}
+
+	respond("No Former Member role is configured")
+}
