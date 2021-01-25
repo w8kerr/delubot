@@ -131,7 +131,7 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 
 	m.LogMessageCreate(db, ds, mc, nil)
 
-	fmt.Println("Got message", mc.Message.MessageReference, mc.Message.MessageReference != nil)
+	// fmt.Println("Got message", mc.Message.MessageReference, mc.Message.MessageReference != nil)
 	if mc.Message.MessageReference != nil {
 		// Get the highest message up the reply chain, and check if it was the bot
 		wasBotReply := false
@@ -163,6 +163,24 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 	// Ignore all messages created by the Bot account itself
 	if mc.Author.ID == ds.State.User.ID {
 		return
+	}
+
+	if mc.Content == config.Emoji("delucringe") {
+		doDelete := false
+		if mc.Message.MessageReference != nil {
+			rMsg, err := ds.ChannelMessage(mc.Message.MessageReference.ChannelID, mc.Message.MessageReference.MessageID)
+			if err != nil {
+				log.Printf("Failed to get reply message: %s", err)
+			} else if rMsg.Content == config.Emoji("delucringe") && rMsg.Author.ID == ds.State.User.ID {
+				doDelete = true
+			}
+		}
+
+		if doDelete {
+			ds.ChannelMessageDelete(mc.Message.ChannelID, mc.Message.ID)
+		} else {
+			ds.ChannelMessageSendReply(mc.Message.ChannelID, config.Emoji("delucringe"), mc.Message.Reference())
+		}
 	}
 
 	channelName := ""
