@@ -10,6 +10,8 @@ func Emoji(emojiCode string) string {
 		return "<:deluyay:759720899737419838>"
 	case "delupat":
 		return "<:delupat:771927216581771286>"
+	case "delucringe":
+		return "<:delucringe:789667159076896779>"
 	case "white_check_mark":
 		return "\u2705"
 	case "x":
