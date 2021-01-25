@@ -165,23 +165,23 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		return
 	}
 
-	if mc.Content == config.Emoji("delucringe") {
-		doDelete := false
-		if mc.Message.MessageReference != nil {
-			rMsg, err := ds.ChannelMessage(mc.Message.MessageReference.ChannelID, mc.Message.MessageReference.MessageID)
-			if err != nil {
-				log.Printf("Failed to get reply message: %s", err)
-			} else if rMsg.Content == config.Emoji("delucringe") && rMsg.Author.ID == ds.State.User.ID {
-				doDelete = true
-			}
-		}
+	// if mc.Content == config.Emoji("delucringe") {
+	// 	doDelete := false
+	// 	if mc.Message.MessageReference != nil {
+	// 		rMsg, err := ds.ChannelMessage(mc.Message.MessageReference.ChannelID, mc.Message.MessageReference.MessageID)
+	// 		if err != nil {
+	// 			log.Printf("Failed to get reply message: %s", err)
+	// 		} else if rMsg.Content == config.Emoji("delucringe") && rMsg.Author.ID == ds.State.User.ID {
+	// 			doDelete = true
+	// 		}
+	// 	}
 
-		if doDelete {
-			ds.ChannelMessageDelete(mc.Message.ChannelID, mc.Message.ID)
-		} else {
-			ds.ChannelMessageSendReply(mc.Message.ChannelID, config.Emoji("delucringe"), mc.Message.Reference())
-		}
-	}
+	// 	if doDelete {
+	// 		ds.ChannelMessageDelete(mc.Message.ChannelID, mc.Message.ID)
+	// 	} else {
+	// 		ds.ChannelMessageSendReply(mc.Message.ChannelID, config.Emoji("delucringe"), mc.Message.Reference())
+	// 	}
+	// }
 
 	channelName := ""
 	channel, err := ds.Channel(mc.ChannelID)
