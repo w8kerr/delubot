@@ -54,7 +54,7 @@ func InitDeepL() {
 }
 
 func DeepLTranslate(text string, language string) (string, string, error) {
-	resp, err := DeepLClient.TranslateSentence(context.Background(), "Hello", LangAuto, language)
+	resp, err := DeepLClient.TranslateSentence(context.Background(), text, LangAuto, language)
 	if err != nil {
 		log.Printf("Failed to translate text '%s', %s", text, err)
 		return "", "", err
