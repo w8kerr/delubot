@@ -39,7 +39,7 @@ const (
 	// LangZH Chinese
 	LangZH = "ZH"
 	// LangAuto Detect
-	LangAuto = "auto"
+	LangAuto = ""
 )
 
 func InitDeepL() {
