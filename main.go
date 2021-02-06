@@ -86,7 +86,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	tl.Init()
+	tl.InitDeepL()
 
 	env := os.Getenv("DELUBOT_ENV")
 	if env != "dev" {

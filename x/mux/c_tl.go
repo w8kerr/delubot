@@ -6,6 +6,8 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/w8kerr/delubot/tl"
+
+	deepl "github.com/PineiroHosting/deeplgobindings/pkg"
 )
 
 func (m *Mux) Translate(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
@@ -19,11 +21,11 @@ func (m *Mux) Translate(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 		return
 	}
 
-	translation, err := tl.Translate(ctx.Content)
+	translation, _, err := tl.DeepLTranslate(ctx.Content, deepl.LangEN)
 	if err != nil {
-		respond(fmt.Sprintf("🔺Google Translate failed, %s", err))
+		respond(fmt.Sprintf("🔺DeepL failed, %s", err))
 		return
 	}
 
-	respond(fmt.Sprintf("🔺Google Translation:\n❝ %s ❞", translation))
+	respond(fmt.Sprintf("🔺DeepL Translation:\n❝ %s ❞", translation))
 }

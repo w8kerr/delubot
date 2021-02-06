@@ -4,16 +4,63 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
+	"regexp"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/w8kerr/delubot/config"
 	"github.com/w8kerr/delubot/models"
 	"github.com/w8kerr/delubot/utils"
+	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 )
+
+type UserYoutubeService struct {
+	service *youtube.Service
+	log     *logrus.Entry
+}
+
+func NewUserYoutubeService(token string) (*UserYoutubeService, error) {
+	ctx := context.Background()
+
+	log := logrus.WithField("svc", "YoutubeService")
+
+	// Service account based oauth2 two legged integration
+	source := oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: token,
+	})
+	service, err := youtube.NewService(ctx, option.WithTokenSource(source))
+	if err != nil {
+		log.WithError(err).Error("Failed to initialize service")
+		return &UserYoutubeService{}, err
+	}
+
+	return &UserYoutubeService{
+		log:     log,
+		service: service,
+	}, nil
+}
+
+func (usvc *UserYoutubeService) SendChatMessage(livechatID string, content string) (*youtube.LiveChatMessage, error) {
+	msg := &youtube.LiveChatMessage{
+		Snippet: &youtube.LiveChatMessageSnippet{
+			LiveChatId: livechatID,
+			Type:       "textMessageEvent",
+			TextMessageDetails: &youtube.LiveChatTextMessageDetails{
+				MessageText: content,
+			},
+		},
+	}
+	sent, err := usvc.service.LiveChatMessages.Insert([]string{"snippet"}, msg).Do()
+	if err != nil {
+		log.Printf("Failed to send chat message: %s", err)
+		log.Println(sent, err)
+	}
+	return sent, err
+}
 
 type YoutubeService struct {
 	service *youtube.Service
@@ -27,8 +74,14 @@ func NewYoutubeService(ctx context.Context) (*YoutubeService, error) {
 		return &YoutubeService{}, err
 	}
 
+	// fmt.Println(string(credentialsJSON))
+
 	// Service account based oauth2 two legged integration
 	service, err := youtube.NewService(ctx, option.WithCredentialsJSON(credentialsJSON))
+	if err != nil {
+		log.Printf("Failed to initialize service, %s", err)
+		return &YoutubeService{}, err
+	}
 
 	return &YoutubeService{
 		log:     logrus.WithField("svc", "YoutubeService"),
@@ -108,4 +161,44 @@ func (svc *YoutubeService) ListUpcomingStreams(channelID string) ([]models.Youtu
 	}
 
 	return liveRecs, nil
+}
+
+func (svc *YoutubeService) GetLivechatID(videoID string) (string, string, error) {
+	resp, err := svc.service.Videos.List([]string{"liveStreamingDetails,snippet"}).Id(videoID).Do()
+	if err != nil {
+		return "", "", errors.New("Failed to get video info")
+	}
+
+	if len(resp.Items) == 0 {
+		return "", "", errors.New("No video")
+	}
+
+	vid := resp.Items[0]
+	if vid.LiveStreamingDetails.ActiveLiveChatId == "" {
+		return "", vid.Snippet.Title, errors.New("Video is not live")
+	}
+
+	fmt.Println("LIVE STREAMING DETAILS")
+	utils.PrintJSON(vid)
+
+	return vid.LiveStreamingDetails.ActiveLiveChatId, vid.Snippet.Title, nil
+}
+
+var idRE = regexp.MustCompile(`^[^"&?\/\s]{11}$`)
+var youtubeRE = regexp.MustCompile(`(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})`)
+
+func (svc *YoutubeService) ParseVideoID(text string) (string, error) {
+	idMatches := idRE.FindAllStringSubmatch(text, -1)
+	for _, m := range idMatches {
+		fmt.Println(m)
+		return m[0], nil
+	}
+
+	linkMatches := youtubeRE.FindAllStringSubmatch(text, -1)
+	for _, m := range linkMatches {
+		fmt.Println(m)
+		return m[1], nil
+	}
+
+	return "", errors.New("No match")
 }

@@ -6,6 +6,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -62,6 +63,21 @@ type Extraction struct {
 	ExtractMessageIDs []string `json:"extract_message_ids" bson:"extract_message_ids"`
 }
 
+type CopyPipeline struct {
+	OID       bson.ObjectId `json:"_id" bson:"_id,omitempty"`
+	CreatedAt time.Time     `json:"created_at" bson:"created_at"`
+
+	CreatedBy      string `json:"created_by" bson:"created_by"`
+	CreatedByName  string `json:"created_by_name" bson:"created_by_name"`
+	Type           string `json:"type" bson:"type"`
+	ChannelID      string `json:"channel_id" bson:"channel_id"`
+	Prefix         string `json:"prefix" bson:"prefix"`
+	YoutubeVideoID string `json:"youtube_video_id" bson:"youtube_video_id"`
+
+	YoutubeVideoTitle string `json:"youtube_video_title" bson:"youtube_video_title"`
+	YoutubeLivechatID string `json:"youtube_livechat_id" bson:"youtube_livechat_id"`
+}
+
 var GrantRoles = map[string]RoleConfig{
 	"755437328515989564": { // DFS
 		Alpha:   "760705266953355295",
@@ -89,6 +105,8 @@ var ErrorChannel = "793361959046217778"
 var TimeFormat string
 
 var GoogleCredentials bson.M
+var GoogleCredentialsAlt1 bson.M
+var YoutubeOauthToken string
 
 var EightBallEnabled bool
 
@@ -104,16 +122,21 @@ var TweetUpdates = make(map[string]TweetUpdate)
 
 var Extractions = make(map[string]Extraction)
 
+var CopyPipelines = []CopyPipeline{}
+
 type BotConfig struct {
-	ModeratorRoles    map[string][]string   `json:"moderator_roles" bson:"moderator_roles"`
-	GrantRoles        map[string]RoleConfig `json:"grant_roles" bson:"grant_roles"`
-	SyncSheets        map[string]string     `json:"sync_sheets" bson:"sync_sheets"`
-	RoleGrantEnabled  map[string]bool       `json:"role_grant_enabled" bson:"role_grant_enabled"`
-	RoleRemoveEnabled map[string]bool       `json:"role_remove_enabled" bson:"role_remove_enabled"`
-	TimeFormat        string                `json:"time_format" bson:"time_format"`
-	GoogleCredentials bson.M                `json:"-" bson:"google_credentials"`
-	EightBallEnabled  bool                  `json:"eight_ball_enabled" bson:"eight_ball_enabled"`
-	TweetSyncChannels []TweetSyncConfig     `json:"tweet_sync_channels" bson:"tweet_sync_channels"`
+	ModeratorRoles        map[string][]string   `json:"moderator_roles" bson:"moderator_roles"`
+	GrantRoles            map[string]RoleConfig `json:"grant_roles" bson:"grant_roles"`
+	SyncSheets            map[string]string     `json:"sync_sheets" bson:"sync_sheets"`
+	RoleGrantEnabled      map[string]bool       `json:"role_grant_enabled" bson:"role_grant_enabled"`
+	RoleRemoveEnabled     map[string]bool       `json:"role_remove_enabled" bson:"role_remove_enabled"`
+	TimeFormat            string                `json:"time_format" bson:"time_format"`
+	GoogleCredentials     bson.M                `json:"-" bson:"google_credentials"`
+	GoogleCredentialsAlt1 bson.M                `json:"-" bson:"google_credentials_alt1"`
+	YoutubeOauthToken     string                `json:"-" bson:"youtube_oauth_token"`
+	EightBallEnabled      bool                  `json:"eight_ball_enabled" bson:"eight_ball_enabled"`
+	TweetSyncChannels     []TweetSyncConfig     `json:"tweet_sync_channels" bson:"tweet_sync_channels"`
+	CopyPipelines         []CopyPipeline        `json:"copy_pipelines" bson:"copy_pipelines"`
 }
 
 // Get Load the config object
@@ -150,8 +173,11 @@ func LoadConfig() error {
 	RoleRemoveEnabled = config.RoleRemoveEnabled
 	TimeFormat = config.TimeFormat
 	GoogleCredentials = config.GoogleCredentials
+	GoogleCredentialsAlt1 = config.GoogleCredentialsAlt1
+	YoutubeOauthToken = config.YoutubeOauthToken
 	EightBallEnabled = config.EightBallEnabled
 	TweetSyncChannels = config.TweetSyncChannels
+	CopyPipelines = config.CopyPipelines
 
 	if GrantRoles == nil {
 		GrantRoles = make(map[string]RoleConfig)
@@ -521,6 +547,77 @@ func MaybeGetTweetConfig(channelID string) *TweetSyncConfig {
 	}
 
 	return nil
+}
+
+func SetCopyPipeline(cp CopyPipeline) error {
+	if GetCopyPipeline(cp.ChannelID, cp.YoutubeVideoID) != nil {
+		return errors.New("Already copying to that chat")
+	}
+
+	if !cp.OID.Valid() {
+		cp.OID = bson.NewObjectId()
+	}
+
+	cp.CreatedAt = time.Now()
+
+	newCPs := append(CopyPipelines, cp)
+
+	update := bson.M{
+		"copy_pipelines": newCPs,
+	}
+
+	err := UpdateConfig(update)
+	if err != nil {
+		return err
+	}
+
+	CopyPipelines = newCPs
+	return nil
+}
+
+func RemoveCopyPipeline(channelID string) ([]CopyPipeline, error) {
+	res := []CopyPipeline{}
+	removed := []CopyPipeline{}
+	for i, cp := range CopyPipelines {
+		if cp.ChannelID == channelID {
+			removed = append(removed, CopyPipelines[i])
+		} else {
+			res = append(res, CopyPipelines[i])
+		}
+	}
+
+	update := bson.M{
+		"copy_pipelines": res,
+	}
+
+	err := UpdateConfig(update)
+	if err != nil {
+		return []CopyPipeline{}, err
+	}
+
+	CopyPipelines = res
+	return removed, nil
+}
+
+func GetCopyPipeline(channelID, videoID string) *CopyPipeline {
+	for _, cp := range CopyPipelines {
+		if cp.ChannelID == channelID && cp.YoutubeVideoID == videoID {
+			return &cp
+		}
+	}
+
+	return nil
+}
+
+func GetCopyPipelines(channelID string) []CopyPipeline {
+	res := []CopyPipeline{}
+	for i, cp := range CopyPipelines {
+		if cp.ChannelID == channelID {
+			res = append(res, CopyPipelines[i])
+		}
+	}
+
+	return res
 }
 
 func ParseTime(raw string) time.Time {

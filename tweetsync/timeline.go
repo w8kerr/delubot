@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	deepl "github.com/PineiroHosting/deeplgobindings/pkg"
 	"github.com/bwmarrin/discordgo"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -99,7 +100,7 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 		})
 
 		for _, tweet := range tweets {
-			translation, err := tl.Translate(tweet.FullText)
+			translation, _, err := tl.DeepLTranslate(tweet.FullText, deepl.LangEN)
 			if err != nil {
 				translation = fmt.Sprintf("[Translation error: %s]", err)
 			}
@@ -108,11 +109,12 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 				Tweet:           tweet,
 				Translation:     translation,
 				CreatedAt:       time.Now(),
-				Translators:     []string{"Google Translate"},
+				Translators:     []string{"DeepL"},
 				HumanTranslated: false,
 			}
 
 			if strings.HasPrefix(tweet.FullText, "@tos") {
+				// Ignore this tweet and mark it as already translated so it doesn't interfere with the targeting of the command
 				st.HumanTranslated = true
 			} else {
 				embed := SyncedTweetToEmbed(st)

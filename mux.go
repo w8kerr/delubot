@@ -30,6 +30,7 @@ func init() {
 	// Register the build-in help command.
 	if env == "dev" {
 		// Dev only commands
+		Router.Route("ytcopy", "Copy messages from the channel to a specified Youtube chat", Router.YoutubeCopy)
 	} else {
 		// Remote only commands
 		Router.Route("help", "Display this message.", Router.Help)

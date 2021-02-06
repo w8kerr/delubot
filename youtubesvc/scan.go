@@ -82,7 +82,7 @@ func Scan(wv models.WatchedVideo) {
 			embed := YoutubeCommentToEmbed(c, wv.VideoID, videoTitle)
 			_, err := DS.ChannelMessageSendEmbed(wv.ChannelID, embed)
 			if err != nil {
-				log.Println("Failed to send message: %s", err)
+				log.Println("Failed to send message:", err)
 			}
 		}
 	}
