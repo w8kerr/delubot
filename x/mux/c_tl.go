@@ -19,7 +19,7 @@ func (m *Mux) Translate(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 		return
 	}
 
-	translation, _, err := tl.DeepLTranslate(ctx.Content, deepl.LangEN)
+	translation, _, err := tl.DeepLTranslate(ctx.Content, tl.LangEN)
 	if err != nil {
 		respond(fmt.Sprintf("🔺DeepL failed, %s", err))
 		return
