@@ -6,8 +6,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/w8kerr/delubot/tl"
-
-	deepl "github.com/PineiroHosting/deeplgobindings/pkg"
 )
 
 func (m *Mux) Translate(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {

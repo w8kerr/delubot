@@ -1,34 +1,64 @@
 package tl
 
 import (
+	"context"
 	"log"
-	"net/http"
 	"os"
 
-	deeplclient "github.com/PineiroHosting/deeplgobindings/pkg"
+	"github.com/DaikiYamakawa/deepl-go"
 )
 
 var DEEPL_API_KEY string
-var DeepLClient *deeplclient.Client
+var DeepLClient *deepl.Client
+
+const (
+	// LangDE German
+	LangDE = "DE"
+	// LangEN English (American)
+	LangEN = "EN-US"
+	// LangENGB English (British)
+	LangENGB = "EN-GB"
+	// LangES Spanish
+	LangES = "ES"
+	// LangFR French
+	LangFR = "FR"
+	// LangIT Italian
+	LangIT = "IT"
+	// LangJA Japanese
+	LangJA = "JA"
+	// LangNL Dutch
+	LangNL = "NL"
+	// LangPL Polish
+	LangPL = "PL"
+	// LangPTPT Portuguese (European)
+	LangPTPT = "PT-PT"
+	// LangPTBR Potuguese (Brazillian)
+	LangPTBR = "PT-BR"
+	// LangRU Russian
+	LangRU = "RU"
+	// LangZH Chinese
+	LangZH = "ZH"
+	// LangAuto Detect
+	LangAuto = "auto"
+)
 
 func InitDeepL() {
 	DEEPL_API_KEY = os.Getenv("DEEPL_API_KEY")
 
-	DeepLClient = &deeplclient.Client{
-		AuthKey: []byte(DEEPL_API_KEY),
-		Client:  &http.Client{},
+	client, err := deepl.New("https://api.deepl.com", nil)
+	if err != nil {
+		log.Printf("Failed to initialize DeepL client: %s", err)
 	}
+
+	DeepLClient = client
 }
 
-func DeepLTranslate(text string, language deeplclient.ApiLang) (string, string, error) {
-	resp, err := DeepLClient.Translate(&deeplclient.TranslationRequest{
-		Text:       text,
-		TargetLang: language,
-	})
+func DeepLTranslate(text string, language string) (string, string, error) {
+	resp, err := DeepLClient.TranslateSentence(context.Background(), "Hello", LangAuto, language)
 	if err != nil {
 		log.Printf("Failed to translate text '%s', %s", text, err)
 		return "", "", err
 	}
 
-	return resp.Translations[0].Text, resp.Translations[0].DetectedSourceLanguage.String(), nil
+	return resp.Translations[0].Text, resp.Translations[0].DetectedSourceLanguage, nil
 }

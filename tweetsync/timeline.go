@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	deepl "github.com/PineiroHosting/deeplgobindings/pkg"
 	"github.com/bwmarrin/discordgo"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -100,7 +99,7 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 		})
 
 		for _, tweet := range tweets {
-			translation, _, err := tl.DeepLTranslate(tweet.FullText, deepl.LangEN)
+			translation, _, err := tl.DeepLTranslate(tweet.FullText, tl.LangEN)
 			if err != nil {
 				translation = fmt.Sprintf("[Translation error: %s]", err)
 			}
