@@ -98,6 +98,13 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			return tweets[i].ID < tweets[j].ID
 		})
 
+		// Save to the DB
+		session := mongo.MDB.Clone()
+		defer session.Close()
+		session.SetMode(mgo.Strong, false)
+		db := session.DB(mongo.DB_NAME)
+		stCol := db.C("synced_tweets")
+
 		for _, tweet := range tweets {
 			translation, _, err := tl.DeepLTranslate(tweet.FullText, tl.LangEN)
 			if err != nil {
@@ -137,12 +144,6 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 				}
 			}
 
-			// Save to the DB
-			session := mongo.MDB.Clone()
-			defer session.Close()
-			session.SetMode(mgo.Strong, false)
-			db := session.DB(mongo.DB_NAME)
-			stCol := db.C("synced_tweets")
 			stCol.Insert(st)
 
 			sinceID = tweet.ID
