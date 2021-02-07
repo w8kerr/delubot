@@ -61,9 +61,13 @@ func GetResponder(ds *discordgo.Session, dm *discordgo.Message) func(msg string)
 	}
 }
 
-func GetEditor(ds *discordgo.Session, dm *discordgo.Message) func(msg string) {
-	return func(msg string) {
-		ds.ChannelMessageEdit(dm.ChannelID, dm.ID, msg)
+func GetEditor(ds *discordgo.Session, dm *discordgo.Message) func(msg string) *discordgo.Message {
+	return func(msg string) *discordgo.Message {
+		ret, err := ds.ChannelMessageEdit(dm.ChannelID, dm.ID, msg)
+		if err != nil {
+			fmt.Println("Error editing message:", err)
+		}
+		return ret
 	}
 }
 

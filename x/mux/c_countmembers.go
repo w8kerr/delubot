@@ -9,12 +9,9 @@ import (
 )
 
 func (m *Mux) CountMembers(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
-	respond := func(msg string) {
-		_, err := ds.ChannelMessageSend(dm.ChannelID, msg)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
+	prerespond := GetResponder(ds, dm)
+	msg := prerespond("🔺Looking up member information...")
+	respond := GetEditor(ds, msg)
 
 	// guild, err := ds.Guild(dm.GuildID)
 	// if err != nil {
@@ -75,7 +72,8 @@ func (m *Mux) CountMembers(ds *discordgo.Session, dm *discordgo.Message, ctx *Co
 		}
 
 		if len(resp)+len(line) > 1997 {
-			respond(resp)
+			respond(resp + "```")
+			respond = prerespond
 			resp = "```"
 		}
 		resp += line
