@@ -49,6 +49,7 @@ func (m *Mux) CountMembers(ds *discordgo.Session, dm *discordgo.Message, ctx *Co
 	resp := "Count members!\n```"
 	resp += fmt.Sprintf("All - %d\n\n", len(members))
 	maxLength := 0
+
 	for _, role := range roles {
 		if count, ok := roleMap[role.ID]; ok {
 			numLength := NumLength(count)
@@ -66,13 +67,18 @@ func (m *Mux) CountMembers(ds *discordgo.Session, dm *discordgo.Message, ctx *Co
 		if role.Name == "@everyone" {
 			continue
 		}
+		line := ""
 		if count, ok := roleMap[role.ID]; ok {
-			line := PadString(fmt.Sprintf("%d", count), maxLength) + fmt.Sprintf(" | %s\n", role.Name)
-			resp += line
+			line = PadString(fmt.Sprintf("%d", count), maxLength) + fmt.Sprintf(" | %s\n", role.Name)
 		} else {
-			line := PadString("0", maxLength) + fmt.Sprintf(" | %s\n", role.Name)
-			resp += line
+			line = PadString("0", maxLength) + fmt.Sprintf(" | %s\n", role.Name)
 		}
+
+		if len(resp)+len(line) > 1997 {
+			respond(resp)
+			resp = "```"
+		}
+		resp += line
 	}
 	resp += "```"
 
