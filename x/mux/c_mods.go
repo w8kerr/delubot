@@ -65,7 +65,7 @@ func (m *Mux) Mods(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	adminCol := db.C("admins")
 
 	resp := "🔺Current moderators!\n```"
-	for _, mod := range members {
+	for _, mod := range mods {
 		name := mod.User.Username + "#" + mod.User.Discriminator
 		resp += name
 		_, err := adminCol.Upsert(bson.M{"discord_id": mod.User.ID}, bson.M{"$set": bson.M{"discord_name": name}})
