@@ -34,6 +34,7 @@ func init() {
 	} else {
 		// Remote only commands
 		Router.Route("help", "Display this message.", Router.Help)
+		Router.Route("mods", "List people with moderator permissions", Router.Mods)
 		Router.Route("countmembers", "Count the members on the server.", Router.CountMembers)
 		Router.Route("alpharole", "Display or set the configured Alpha role ('clear' to clear).", Router.AlphaRole)
 		Router.Route("specialrole", "Display or set the configured Special role ('clear' to clear).", Router.SpecialRole)
