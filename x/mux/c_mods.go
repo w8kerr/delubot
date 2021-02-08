@@ -54,8 +54,8 @@ func (m *Mux) Mods(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 		}
 	}
 
-	sort.SliceStable(members, func(i, j int) bool {
-		return members[i].User.Username > members[j].User.Username
+	sort.SliceStable(mods, func(i, j int) bool {
+		return mods[i].User.Username > mods[j].User.Username
 	})
 
 	session := mongo.MDB.Clone()
@@ -65,11 +65,12 @@ func (m *Mux) Mods(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	adminCol := db.C("admins")
 
 	resp := "🔺Current moderators!\n```"
-	for _, member := range members {
-		name := member.User.Username + "#" + member.User.Discriminator
+	for _, mod := range members {
+		name := mod.User.Username + "#" + mod.User.Discriminator
 		resp += name
-		_, err := adminCol.Upsert(bson.M{"discord_id": member.User.ID}, bson.M{"discord_name": name})
+		_, err := adminCol.Upsert(bson.M{"discord_id": mod.User.ID}, bson.M{"$set": bson.M{"discord_name": name}})
 		if err != nil {
+			fmt.Println("Failed to set admin record:", err)
 			resp += " (" + err.Error() + ")"
 		}
 		resp += "\n"
