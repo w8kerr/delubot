@@ -67,7 +67,7 @@ func (m *Mux) Mods(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	resp := "🔺Current moderators!\n```"
 	for _, mod := range mods {
 		name := mod.User.Username + "#" + mod.User.Discriminator
-		resp += name
+		resp += mod.User.ID + " | " + name
 		_, err := adminCol.Upsert(bson.M{"discord_id": mod.User.ID}, bson.M{"$set": bson.M{"discord_name": name}})
 		if err != nil {
 			fmt.Println("Failed to set admin record:", err)
@@ -76,7 +76,7 @@ func (m *Mux) Mods(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 		resp += "\n"
 	}
 
-	respond(resp)
+	respond(resp + "```")
 	if err != nil {
 		fmt.Println(err)
 	}
