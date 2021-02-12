@@ -12,6 +12,14 @@ func Emoji(emojiCode string) string {
 		return "<:delupat:771927216581771286>"
 	case "delucringe":
 		return "<:delucringe:789667159076896779>"
+	case "VeePat":
+		return "<:VeePat:781367465061515284>"
+	case "defaultpat":
+		return "<:defaultpat:804958096521953310>"
+	case "mirroredpat":
+		return "<:mirroredpat:804960286749884448>"
+	case "okaytsu":
+		return "<:okaytsu:804993887387123732>"
 	case "white_check_mark":
 		return "\u2705"
 	case "x":
