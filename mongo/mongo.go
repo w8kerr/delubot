@@ -87,7 +87,7 @@ func ensureIndexes() {
 	//common db
 	fmt.Println("INDEXING:", DB_NAME)
 
-	createNormalIndex("message_logs", []string{"message_id"})
+	createNormalIndex("message_logs", []string{"messageid"})
 }
 
 func createNormalIndex(collection string, index []string) {
