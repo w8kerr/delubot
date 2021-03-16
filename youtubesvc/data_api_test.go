@@ -46,7 +46,7 @@ func Test_LiveChatID(t *testing.T) {
 		fmt.Println("Error", err)
 	}
 
-	id, title, err := svc.GetLivechatID("KToTHEn5Rvg")
+	id, title, err := svc.GetLivechatID("ZtqZgmARs4o")
 	if err != nil {
 		fmt.Println("Error", err)
 	}
@@ -63,13 +63,13 @@ func Test_SendChatMessage(t *testing.T) {
 
 	config.LoadConfig()
 
-	svc, err := NewUserYoutubeService(config.YoutubeOauthToken)
+	svc, err := NewUserYoutubeService(config.YoutubeOauthToken, &config.YoutubeRefreshToken)
 	if err != nil {
 		fmt.Println("Error", err)
 	}
 
-	liveChatID := "Cg0KC0tUb1RIRW41UnZnKicKGFVDc0FKQnl1QzBTa2U2NG1DTjRPRHNhQRILS1RvVEhFbjVSdmc"
+	liveChatID := "Cg0KC1p0cVpnbUFSczRvKicKGFVDc0FKQnl1QzBTa2U2NG1DTjRPRHNhQRILWnRxWmdtQVJzNG8"
 
-	sent, err := svc.SendChatMessage(liveChatID, "does it auto refresh?")
+	sent, err := svc.SendChatMessage(liveChatID, "hello there!")
 	utils.PrintJSON(sent)
 }

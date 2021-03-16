@@ -31,6 +31,8 @@ func init() {
 	if env == "dev" {
 		// Dev only commands
 		Router.Route("ytcopy", "Copy messages from the channel to a specified Youtube chat", Router.YoutubeCopy)
+		Router.Route("endcopy", "Stop copying messages from the channel to Youtube", Router.EndYoutubeCopy)
+		Router.Route("clearuntil", "Clear messages from the channel until reaching the replied-to message", Router.ClearUntil)
 	} else {
 		// Remote only commands
 		Router.Route("help", "Display this message.", Router.Help)

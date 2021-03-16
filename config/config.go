@@ -106,7 +106,13 @@ var TimeFormat string
 
 var GoogleCredentials bson.M
 var GoogleCredentialsAlt1 bson.M
+var GoogleOauthCredentials bson.M
+
+var GoogleClientID string
+var GoogleSecret string
+
 var YoutubeOauthToken string
+var YoutubeRefreshToken string
 
 var EightBallEnabled bool
 
@@ -125,18 +131,22 @@ var Extractions = make(map[string]Extraction)
 var CopyPipelines = []CopyPipeline{}
 
 type BotConfig struct {
-	ModeratorRoles        map[string][]string   `json:"moderator_roles" bson:"moderator_roles"`
-	GrantRoles            map[string]RoleConfig `json:"grant_roles" bson:"grant_roles"`
-	SyncSheets            map[string]string     `json:"sync_sheets" bson:"sync_sheets"`
-	RoleGrantEnabled      map[string]bool       `json:"role_grant_enabled" bson:"role_grant_enabled"`
-	RoleRemoveEnabled     map[string]bool       `json:"role_remove_enabled" bson:"role_remove_enabled"`
-	TimeFormat            string                `json:"time_format" bson:"time_format"`
-	GoogleCredentials     bson.M                `json:"-" bson:"google_credentials"`
-	GoogleCredentialsAlt1 bson.M                `json:"-" bson:"google_credentials_alt1"`
-	YoutubeOauthToken     string                `json:"-" bson:"youtube_oauth_token"`
-	EightBallEnabled      bool                  `json:"eight_ball_enabled" bson:"eight_ball_enabled"`
-	TweetSyncChannels     []TweetSyncConfig     `json:"tweet_sync_channels" bson:"tweet_sync_channels"`
-	CopyPipelines         []CopyPipeline        `json:"copy_pipelines" bson:"copy_pipelines"`
+	ModeratorRoles         map[string][]string   `json:"moderator_roles" bson:"moderator_roles"`
+	GrantRoles             map[string]RoleConfig `json:"grant_roles" bson:"grant_roles"`
+	SyncSheets             map[string]string     `json:"sync_sheets" bson:"sync_sheets"`
+	RoleGrantEnabled       map[string]bool       `json:"role_grant_enabled" bson:"role_grant_enabled"`
+	RoleRemoveEnabled      map[string]bool       `json:"role_remove_enabled" bson:"role_remove_enabled"`
+	TimeFormat             string                `json:"time_format" bson:"time_format"`
+	GoogleCredentials      bson.M                `json:"-" bson:"google_credentials"`
+	GoogleCredentialsAlt1  bson.M                `json:"-" bson:"google_credentials_alt1"`
+	GoogleOauthCredentials bson.M                `json:"-" bson:"google_oauth_credentials"`
+	GoogleClientID         string                `json:"-" bson:"google_client_id"`
+	GoogleSecret           string                `json:"-" bson:"google_secret"`
+	YoutubeOauthToken      string                `json:"-" bson:"youtube_oauth_token"`
+	YoutubeRefreshToken    string                `json:"-" bson:"youtube_refresh_token"`
+	EightBallEnabled       bool                  `json:"eight_ball_enabled" bson:"eight_ball_enabled"`
+	TweetSyncChannels      []TweetSyncConfig     `json:"tweet_sync_channels" bson:"tweet_sync_channels"`
+	CopyPipelines          []CopyPipeline        `json:"copy_pipelines" bson:"copy_pipelines"`
 }
 
 // Get Load the config object
@@ -174,7 +184,11 @@ func LoadConfig() error {
 	TimeFormat = config.TimeFormat
 	GoogleCredentials = config.GoogleCredentials
 	GoogleCredentialsAlt1 = config.GoogleCredentialsAlt1
+	GoogleOauthCredentials = config.GoogleOauthCredentials
+	GoogleClientID = config.GoogleClientID
+	GoogleSecret = config.GoogleSecret
 	YoutubeOauthToken = config.YoutubeOauthToken
+	YoutubeRefreshToken = config.YoutubeRefreshToken
 	EightBallEnabled = config.EightBallEnabled
 	TweetSyncChannels = config.TweetSyncChannels
 	CopyPipelines = config.CopyPipelines

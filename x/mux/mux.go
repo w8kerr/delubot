@@ -165,6 +165,13 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		return
 	}
 
+	// Handle Youtube copy pipelines
+	for _, cp := range config.CopyPipelines {
+		if cp.ChannelID == mc.ChannelID {
+			go m.CopyMessageToYoutube(ds, mc.Message, cp)
+		}
+	}
+
 	// if mc.Content == config.Emoji("delucringe") {
 	// 	doDelete := false
 	// 	if mc.Message.MessageReference != nil {
@@ -218,6 +225,11 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		if config.IsModmailChannel(ds, mc.GuildID, mc.ChannelID) {
 			ctx.Content = strings.TrimSpace(m.Prefix) + " vd" + strings.TrimPrefix(ctx.Content, "=vd")
 		}
+	}
+
+	// Catch the special "!clear" command, alias it to a real command
+	if strings.HasPrefix(ctx.Content, "!clear") {
+		ctx.Content = strings.TrimSpace(m.Prefix) + " clearuntil" + strings.TrimPrefix(ctx.Content, "!clear")
 	}
 
 	// Fetch the channel for this Message

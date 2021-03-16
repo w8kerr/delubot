@@ -88,7 +88,7 @@ func (m *Mux) EndYoutubeCopy(ds *discordgo.Session, dm *discordgo.Message, ctx *
 
 	err = ds.MessageReactionAdd(dm.ChannelID, dm.ID, "\U0001F44D")
 	if err != nil {
-		fmt.Printf("Failed to add \U0001F44D reaction, %s\n", err)
+		fmt.Printf("🔺Failed to add \U0001F44D reaction, %s\n", err)
 	}
 }
 
@@ -108,4 +108,61 @@ func StartCopyEmbed(cp config.CopyPipeline) *discordgo.MessageEmbed {
 		Timestamp: cp.CreatedAt.Format(time.RFC3339),
 	}
 	return embed
+}
+
+func (m *Mux) CopyMessageToYoutube(ds *discordgo.Session, dm *discordgo.Message, cp config.CopyPipeline) {
+	respond := GetResponder(ds, dm)
+
+	svc, err := youtubesvc.NewUserYoutubeService(config.YoutubeOauthToken, &config.YoutubeRefreshToken)
+	if err != nil {
+		fmt.Println("Error", err)
+	}
+
+	text, err := dm.ContentWithMoreMentionsReplaced(ds)
+	if err != nil {
+		respond(fmt.Sprintf("🔺Failed to copy message to Youtube: %s", err))
+		return
+	}
+
+	text, abort := RemoveUnwantedElements(text)
+	if abort {
+		return
+	}
+
+	characterLimit := 200 - len(cp.Prefix)
+
+	words := strings.Split(text, " ")
+
+	output := ""
+	for i := 0; i < len(words); i++ {
+		nextWord := words[i]
+		if output != "" {
+			nextWord = " " + nextWord
+		}
+		if len(output)+len(nextWord) > characterLimit {
+			_, err = svc.SendChatMessage(cp.YoutubeLivechatID, cp.Prefix+output)
+			fmt.Println("Sent youtube message,", cp.Prefix+output)
+			if err != nil {
+				respond(fmt.Sprintf("🔺Failed to copy message to Youtube: %s", err))
+				return
+			}
+			time.Sleep(1 * time.Second)
+			output = nextWord
+		} else {
+			output += nextWord
+		}
+	}
+	_, err = svc.SendChatMessage(cp.YoutubeLivechatID, cp.Prefix+output)
+	fmt.Println("Sent youtube message,", cp.Prefix+output)
+	if err != nil {
+		respond(fmt.Sprintf("🔺Failed to copy message to Youtube: %s", err))
+		return
+	}
+}
+
+func RemoveUnwantedElements(text string) (string, bool) {
+	if strings.HasPrefix(text, "-db") {
+		return "", true
+	}
+	return text, false
 }
