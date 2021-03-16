@@ -30,11 +30,11 @@ func init() {
 	// Register the build-in help command.
 	if env == "dev" {
 		// Dev only commands
+	} else {
+		// Remote only commands
 		Router.Route("ytcopy", "Copy messages from the channel to a specified Youtube chat", Router.YoutubeCopy)
 		Router.Route("endcopy", "Stop copying messages from the channel to Youtube", Router.EndYoutubeCopy)
 		Router.Route("clearuntil", "Clear messages from the channel until reaching the replied-to message", Router.ClearUntil)
-	} else {
-		// Remote only commands
 		Router.Route("help", "Display this message.", Router.Help)
 		Router.Route("mods", "List people with moderator permissions", Router.Mods)
 		Router.Route("countmembers", "Count the members on the server.", Router.CountMembers)
