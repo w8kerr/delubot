@@ -96,7 +96,7 @@ func main() {
 		}
 	}
 
-	go tweetsync.InitTimelines(Session)
+	tweetsync.InitTimelines(Session)
 
 	channels, err := Session.GuildChannels("755437328515989564")
 	for _, channel := range channels {
