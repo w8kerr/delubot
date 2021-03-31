@@ -6,6 +6,7 @@ package mux
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -170,6 +171,11 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		if cp.ChannelID == mc.ChannelID {
 			go m.CopyMessageToYoutube(ds, mc.Message, cp)
 		}
+	}
+
+	// 1 in 200 chance for a :delucringe: response on every message
+	if rand.Intn(200) == 0 {
+		ds.ChannelMessageSendReply(mc.Message.ChannelID, config.Emoji("delucringe"), mc.Message.Reference())
 	}
 
 	// if mc.Content == config.Emoji("delucringe") {
