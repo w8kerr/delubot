@@ -98,7 +98,7 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			return tweets[i].ID < tweets[j].ID
 		})
 
-		fmt.Println("Received", len(tweets), "tweets")
+		// fmt.Println("Received", len(tweets), "tweets")
 
 		// Save to the DB
 		session := mongo.MDB.Clone()
@@ -155,7 +155,7 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 			}
 		}
 
-		fmt.Println("Finished echoing tweets")
+		// fmt.Println("Finished echoing tweets")
 		session.Close()
 	}
 }

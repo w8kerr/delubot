@@ -174,7 +174,9 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 	}
 
 	// 1 in 200 chance for a :delucringe: response on every message
-	if rand.Intn(200) == 0 {
+	randNum := rand.Intn(100)
+	fmt.Println("Check random", randNum)
+	if randNum == 0 {
 		ds.ChannelMessageSendReply(mc.Message.ChannelID, config.Emoji("delucringe"), mc.Message.Reference())
 	}
 
