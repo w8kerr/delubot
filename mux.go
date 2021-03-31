@@ -56,6 +56,7 @@ func init() {
 		Router.Route("streams", "Display upcoming streams", Router.Streams)
 		Router.Route("stream", "Display upcoming streams", Router.Stream)
 		Router.Route("avatar", "Set the bot's avatar", Router.Avatar)
+		Router.Route("nickname", "Set the bot's nickname", Router.Nickname)
 		// Router.Route("proposal", "Create a sign-off sheet following the message.", Router.Proposal)
 		Router.Route("8ball", "Receive DeluBot's guidance", Router.EightBall)
 		Router.Route("headpat", "Give a headpat", Router.Headpat)
