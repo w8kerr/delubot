@@ -173,13 +173,6 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		}
 	}
 
-	// 1 in 200 chance for a :delucringe: response on every message
-	randNum := rand.Intn(200)
-	// fmt.Println("Check random", randNum)
-	if randNum == 0 {
-		ds.ChannelMessageSendReply(mc.Message.ChannelID, config.Emoji("delucringe"), mc.Message.Reference())
-	}
-
 	// if mc.Content == config.Emoji("delucringe") {
 	// 	doDelete := false
 	// 	if mc.Message.MessageReference != nil {
@@ -204,6 +197,13 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		channelName = channel.Name
 	} else {
 		channelName = err.Error()
+	}
+
+	// 1 in 200 chance for a :delucringe: response on every message
+	randNum := rand.Intn(200)
+	// fmt.Println("Check random", randNum)
+	if randNum == 0 && channel.ParentID != "779849308525690900" {
+		ds.ChannelMessageSendReply(mc.Message.ChannelID, config.Emoji("delucringe"), mc.Message.Reference())
 	}
 
 	// Ignore all messages by non-moderators
