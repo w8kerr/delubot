@@ -20,6 +20,8 @@ func Emoji(emojiCode string) string {
 		return "<:mirroredpat:804960286749884448>"
 	case "okaytsu":
 		return "<:okaytsu:804993887387123732>"
+	case "stickpat":
+		return "<:stickpat:823128772500652053>"
 	case "white_check_mark":
 		return "\u2705"
 	case "x":
