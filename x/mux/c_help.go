@@ -71,14 +71,14 @@ func (m *Mux) Help(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	for _, k := range keys {
 		v := cmdmap[k]
 		accessSymbol := GetAccessSymbol(v.Access)
-		next := fmt.Sprintf("%s%-"+strconv.Itoa(maxlen)+"s # %s (%s)\n", cp, v.Pattern+v.Help, v.Description, accessSymbol)
+		next := fmt.Sprintf("(%s) %s%-"+strconv.Itoa(maxlen)+"s # %s\n", accessSymbol, cp, v.Pattern+v.Help, v.Description)
 		if len(resp)+len(next) > 1997 {
 			resp += "```"
 			_, err := ds.ChannelMessageSend(dm.ChannelID, resp)
 			if err != nil {
 				fmt.Println(err)
 			}
-			resp = "```"
+			resp = "```autoit\n"
 		}
 
 		resp += next
