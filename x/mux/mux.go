@@ -214,9 +214,6 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		msg = "[M] " + msg
 	}
 	fmt.Println("#" + channelName + " - " + msg)
-	if !IsModerator(ds, mc) {
-		return
-	}
 
 	// Create Context struct that we can put various infos into
 	ctx := &Context{
