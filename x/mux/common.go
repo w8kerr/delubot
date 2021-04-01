@@ -88,7 +88,7 @@ func GetAccessSymbol(access int) string {
 	case models.AL_MOD:
 		return "θ"
 	case models.AL_DEV:
-		return config.Emoji("mirroredpat")
+		return "M"
 	default:
 		return "?"
 	}
