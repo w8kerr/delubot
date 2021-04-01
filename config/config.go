@@ -32,6 +32,19 @@ var ModeratorRoles = map[string][]string{
 	},
 }
 
+var StaffRoles = map[string][]string{
+	"755437328515989564": { // DFS
+		"755623281238867980", // Founder - Ω
+		"775181732864852048", // Server Admin Team - Φ
+		"778288741504516096", // Head Mod
+		"775667196969877504", // [WIP] Engineer
+		"755788358994755664", // Moderators - θ
+		"770268062871715850", // JP Mods/モデレータ - θ
+		"770266890882383912", // CN Mods/管理員 - θ
+		"770040458666836049", // Reddit Mods - θ
+	},
+}
+
 type RoleConfig struct {
 	Alpha   string `json:"alpha" bson:"alpha"`
 	Special string `json:"special" bson:"special"`
@@ -132,6 +145,7 @@ var CopyPipelines = []CopyPipeline{}
 
 type BotConfig struct {
 	ModeratorRoles         map[string][]string   `json:"moderator_roles" bson:"moderator_roles"`
+	StaffRoles             map[string][]string   `json:"staff_roles" bson:"staff_roles"`
 	GrantRoles             map[string]RoleConfig `json:"grant_roles" bson:"grant_roles"`
 	SyncSheets             map[string]string     `json:"sync_sheets" bson:"sync_sheets"`
 	RoleGrantEnabled       map[string]bool       `json:"role_grant_enabled" bson:"role_grant_enabled"`
@@ -177,6 +191,7 @@ func LoadConfig() error {
 	}
 
 	ModeratorRoles = config.ModeratorRoles
+	StaffRoles = config.StaffRoles
 	GrantRoles = config.GrantRoles
 	SyncSheets = config.SyncSheets
 	RoleGrantEnabled = config.RoleGrantEnabled

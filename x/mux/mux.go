@@ -23,6 +23,7 @@ type Route struct {
 	Description string      // short description of this route
 	Help        string      // detailed help string for this route
 	Run         HandlerFunc // route handler function to call
+	Access      int         // access level for the command
 }
 
 // Context holds a bit of extra data we pass along to route handlers
@@ -55,12 +56,13 @@ func New() *Mux {
 }
 
 // Route allows you to register a route
-func (m *Mux) Route(pattern, desc string, cb HandlerFunc) (*Route, error) {
+func (m *Mux) Route(pattern, desc string, cb HandlerFunc, access int) (*Route, error) {
 
 	r := Route{}
 	r.Pattern = pattern
 	r.Description = desc
 	r.Run = cb
+	r.Access = access
 	m.Routes = append(m.Routes, &r)
 
 	fmt.Printf("Command \"%s%s\" loaded\n", m.Prefix, r.Pattern)
@@ -308,6 +310,10 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 	fmt.Println("Received command:", ctx.Content)
 	r, fl := m.FuzzyMatch(ctx.Content)
 	if r != nil {
+		if !HasAccess(ds, mc, r.Access) {
+			return
+		}
+
 		ctx.Fields = fl
 		r.Run(ds, mc.Message, ctx)
 		return

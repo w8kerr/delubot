@@ -11,6 +11,14 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
+// Command access levels
+const (
+	AL_EVERYONE = 1
+	AL_STAFF    = 2
+	AL_MOD      = 3
+	AL_DEV      = 4
+)
+
 // Config Config model
 type Config struct {
 	SuppressFanboxSweep bool     `bson:"suppress_fanbox_sweep"`

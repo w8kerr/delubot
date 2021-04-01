@@ -70,7 +70,18 @@ func (m *Mux) Help(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	// Add sorted result to help msg
 	for _, k := range keys {
 		v := cmdmap[k]
-		resp += fmt.Sprintf("%s%-"+strconv.Itoa(maxlen)+"s # %s\n", cp, v.Pattern+v.Help, v.Description)
+		accessSymbol := GetAccessSymbol(v.Access)
+		next := fmt.Sprintf("%s%-"+strconv.Itoa(maxlen)+"s # %s (%s)\n", cp, v.Pattern+v.Help, v.Description, accessSymbol)
+		if len(resp)+len(next) > 1997 {
+			resp += "```"
+			_, err := ds.ChannelMessageSend(dm.ChannelID, resp)
+			if err != nil {
+				fmt.Println(err)
+			}
+			resp = "```"
+		}
+
+		resp += next
 	}
 
 	resp += "```\n"

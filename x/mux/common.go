@@ -8,6 +8,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/w8kerr/delubot/config"
+	"github.com/w8kerr/delubot/models"
 )
 
 // IsModerator check if a user is a moderator
@@ -33,6 +34,64 @@ func IsModerator(ds *discordgo.Session, dm *discordgo.MessageCreate) bool {
 	}
 
 	return false
+}
+
+// IsStaff check if a user is a staff member
+func IsStaff(ds *discordgo.Session, dm *discordgo.MessageCreate) bool {
+	member, err := ds.GuildMember(dm.GuildID, dm.Author.ID)
+	if err != nil {
+		log.Printf("error getting user's member, %s", err)
+		return false
+	}
+
+	guildMods, ok := config.StaffRoles[dm.GuildID]
+	if !ok {
+		log.Printf("Could not find guild roles, %s", dm.GuildID)
+		return false
+	}
+
+	for _, modRole := range guildMods {
+		for _, memberRole := range member.Roles {
+			if modRole == memberRole {
+				return true
+			}
+		}
+	}
+
+	return false
+
+}
+
+// HasAccess check if a user has the specified access level
+func HasAccess(ds *discordgo.Session, dm *discordgo.MessageCreate, access int) bool {
+	switch access {
+	case models.AL_EVERYONE:
+		return true
+	case models.AL_STAFF:
+		return IsStaff(ds, dm)
+	case models.AL_MOD:
+		return IsModerator(ds, dm)
+	case models.AL_DEV:
+		return dm.Author.ID == config.CreatorID
+	default:
+		log.Println("Command with unknown access level!")
+		return false
+	}
+}
+
+func GetAccessSymbol(access int) string {
+	switch access {
+	case models.AL_EVERYONE:
+		return "α"
+	case models.AL_STAFF:
+		return "Ψ"
+	case models.AL_MOD:
+		return "θ"
+	case models.AL_DEV:
+		return config.Emoji("mirroredpat")
+	default:
+		return "?"
+	}
 }
 
 func GetResponder(ds *discordgo.Session, dm *discordgo.Message) func(msg string) *discordgo.Message {
