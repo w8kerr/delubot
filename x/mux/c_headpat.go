@@ -31,6 +31,9 @@ func (m *Mux) Headpat(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 			msg = fmt.Sprintf("_-Gives %s a thumbs up-_", dm.Author.Mention())
 			emoji = config.Emoji("okaytsu")
 		}
+		if dm.Author.Username == "EarthenSpire" {
+			emoji = config.Emoji("stickpat")
+		}
 	}
 
 	respond(msg)
