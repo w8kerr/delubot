@@ -32,17 +32,17 @@ func (m *Mux) Headpat(ds *discordgo.Session, dm *discordgo.Message, ctx *Context
 		msg = fmt.Sprintf("_-Pats %s's head instead-_", veeMention)
 		emoji = config.Emoji("VeePat")
 	} else {
-		if dm.Author.Username == "default" {
+		if target.Username == "default" {
 			emoji = config.Emoji("defaultpat")
 		}
-		if dm.Author.Username == "Mirrored" {
+		if target.Username == "Mirrored" {
 			emoji = config.Emoji("mirroredpat")
 		}
-		if dm.Author.Username == "Kitsu 木狐" {
-			msg = fmt.Sprintf("_-Gives %s a thumbs up-_", dm.Author.Mention())
+		if target.Username == "Kitsu 木狐" {
+			msg = fmt.Sprintf("_-Gives %s a thumbs up-_", target.Mention())
 			emoji = config.Emoji("okaytsu")
 		}
-		if dm.Author.Username == "EarthenSpire" {
+		if target.Username == "EarthenSpire" {
 			emoji = config.Emoji("stickpat")
 		}
 	}
