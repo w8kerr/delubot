@@ -44,7 +44,7 @@ func UpdateClockName(ds *discordgo.Session, now time.Time) {
 	timeStr := FormatTime(now)
 
 	guildID := "755437328515989564"
-	userID := "204752740503650304"
+	userID := "@me"
 	fmt.Println("Update clock name to", timeStr)
 	err := ds.GuildMemberNickname(guildID, userID, timeStr)
 	if err != nil {
