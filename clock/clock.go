@@ -62,6 +62,7 @@ func FormatTime(now time.Time) string {
 }
 
 var clockEmojiTop = map[int]string{
+	0:  "🕛",
 	1:  "🕐",
 	2:  "🕑",
 	3:  "🕒",
@@ -73,10 +74,10 @@ var clockEmojiTop = map[int]string{
 	9:  "🕘",
 	10: "🕙",
 	11: "🕚",
-	12: "🕛",
 }
 
 var clockEmojiBottom = map[int]string{
+	0:  "🕧",
 	1:  "🕜",
 	2:  "🕝",
 	3:  "🕞",
@@ -88,16 +89,15 @@ var clockEmojiBottom = map[int]string{
 	9:  "🕤",
 	10: "🕥",
 	11: "🕦",
-	12: "🕧",
 }
 
 func GetClockEmoji(now time.Time) string {
 	adj := now.Add(15 * time.Minute)
 	if adj.Minute() < 30 {
-		emoji := clockEmojiTop[now.Hour()]
+		emoji := clockEmojiTop[now.Hour()%12]
 		return emoji
 	} else {
-		emoji := clockEmojiBottom[now.Hour()]
+		emoji := clockEmojiBottom[now.Hour()%12]
 		return emoji
 	}
 }
