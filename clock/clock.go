@@ -14,7 +14,7 @@ func RunClockChannel(ds *discordgo.Session) {
 		sleepDur := time.Duration(60 - now.Second())
 
 		UpdateClockChannel(ds, now)
-		time.Sleep(sleepDur)
+		time.Sleep(sleepDur * time.Second)
 	}
 }
 
@@ -34,8 +34,9 @@ func RunClockName(ds *discordgo.Session) {
 		now := time.Now()
 		sleepDur := time.Duration(60 - now.Second())
 
-		UpdateClockChannel(ds, now)
-		time.Sleep(sleepDur)
+		UpdateClockName(ds, now)
+
+		time.Sleep(sleepDur * time.Second)
 	}
 }
 
