@@ -21,7 +21,7 @@ func RunClockChannel(ds *discordgo.Session) {
 func UpdateClockChannel(ds *discordgo.Session, now time.Time) {
 	timeStr := FormatTime(now)
 
-	channelID := "823594389678194688"
+	channelID := "831364073794437170"
 	fmt.Println("Update clock channel to", timeStr)
 	_, err := ds.ChannelEdit(channelID, timeStr)
 	if err != nil {
