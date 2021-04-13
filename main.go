@@ -112,7 +112,7 @@ func main() {
 
 	go Router.InitScanForUpdates(Session)
 
-	go clock.RunClockChannel(Session)
+	// go clock.RunClockChannel(Session)
 	go clock.RunClockName(Session)
 
 	// Run the command muxer
