@@ -15,7 +15,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/w8kerr/delubot/clock"
 	"github.com/w8kerr/delubot/config"
 	"github.com/w8kerr/delubot/mongo"
 	"github.com/w8kerr/delubot/sheetsync"
@@ -113,7 +112,7 @@ func main() {
 	go Router.InitScanForUpdates(Session)
 
 	// go clock.RunClockChannel(Session)
-	go clock.RunClockName(Session)
+	// go clock.RunClockName(Session)
 
 	// Run the command muxer
 	// Session.AddHandler(Router.OnMessageCreate)
