@@ -42,6 +42,7 @@ func init() {
 		Router.Route("alpharole", "Display or set the configured Alpha role ('clear' to clear).", Router.AlphaRole, models.AL_MOD)
 		Router.Route("specialrole", "Display or set the configured Special role ('clear' to clear).", Router.SpecialRole, models.AL_MOD)
 		Router.Route("whalerole", "Display or set the configured Whale role ('clear' to clear).", Router.WhaleRole, models.AL_MOD)
+		Router.Route("fanboxrole", "Display or set the configured Fanbox role ('clear' to clear).", Router.FanboxRole, models.AL_MOD)
 		Router.Route("formerrole", "Display or set the configured Former Member role ('clear' to clear).", Router.FormerRole, models.AL_MOD)
 		Router.Route("muterole", "Display or set the configured Mute role ('clear' to clear).", Router.MuteRole, models.AL_MOD)
 		Router.Route("syncsheet", "Display or set the configured Sync Sheet ID ('clear' to clear).", Router.SyncSheet, models.AL_MOD)
@@ -67,6 +68,7 @@ func init() {
 		Router.Route("extractmessages", "Delete an entire segment of chat messages, in between two messages that match a given pattern", Router.ExtractMessages, models.AL_MOD)
 		Router.Route("sticky", "Make a message stay at the bottom of the chat", Router.Sticky, models.AL_STAFF)
 		Router.Route("unsticky", "Stop promoting the sticky in the current channel", Router.Unsticky, models.AL_STAFF)
+		Router.Route("promotemembers", "Promote all expired members to full members", Router.PromoteMembers, models.AL_DEV)
 	}
 	// Commands for both remote and dev
 
