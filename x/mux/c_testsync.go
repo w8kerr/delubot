@@ -19,18 +19,23 @@ func (m *Mux) TestSync(ds *discordgo.Session, dm *discordgo.Message, ctx *Contex
 	}
 
 	alphaRole := config.AlphaRole(dm.GuildID)
-	if sheetID == "" {
+	if alphaRole == "" {
 		respond("Could test role sync, no Alpha role defined")
 		return
 	}
 	specialRole := config.SpecialRole(dm.GuildID)
-	if sheetID == "" {
+	if specialRole == "" {
 		respond("Could test role sync, no Whale role defined")
 		return
 	}
 	whaleRole := config.WhaleRole(dm.GuildID)
-	if sheetID == "" {
+	if whaleRole == "" {
 		respond("Could test role sync, no Whale role defined")
+		return
+	}
+	fanboxRole := config.FanboxRole(dm.GuildID)
+	if fanboxRole == "" {
+		respond("Could test role sync, no Fanbox role defined")
 		return
 	}
 
@@ -73,6 +78,15 @@ func (m *Mux) TestSync(ds *discordgo.Session, dm *discordgo.Message, ctx *Contex
 			log.Println(handle, " already had Whale role")
 		}
 	}
+	gf := func(member *discordgo.Member, entry sheetsync.RoleRow, errors *[]sheetsync.RoleRow, updated *bool, failed *bool) {
+		handle := member.User.Username + "#" + member.User.Discriminator
+		if !sheetsync.HasRole(member, fanboxRole) {
+			log.Println("Give Fanbox role to", handle)
+			*updated = true
+		} else {
+			log.Println(handle, " already had Fanbox role")
+		}
+	}
 	ra := func(member *discordgo.Member, entry sheetsync.RoleRow, errors *[]sheetsync.RoleRow, updated *bool, failed *bool) {
 		handle := member.User.Username + "#" + member.User.Discriminator
 		if sheetsync.HasRole(member, alphaRole) {
@@ -100,17 +114,28 @@ func (m *Mux) TestSync(ds *discordgo.Session, dm *discordgo.Message, ctx *Contex
 			log.Println(handle, " already had Whale role")
 		}
 	}
+	rf := func(member *discordgo.Member, entry sheetsync.RoleRow, errors *[]sheetsync.RoleRow, updated *bool, failed *bool) {
+		handle := member.User.Username + "#" + member.User.Discriminator
+		if sheetsync.HasRole(member, fanboxRole) {
+			log.Println("Remove Fanbox role from", handle)
+			*updated = true
+		} else {
+			log.Println(handle, " already had Fanbox role")
+		}
+	}
 
-	report := func(gaveAlpha []sheetsync.RoleRow, gaveSpecial []sheetsync.RoleRow, gaveWhale []sheetsync.RoleRow, removedRoles []sheetsync.RoleRow, wasBanned []sheetsync.RoleRow, errors []sheetsync.RoleRow) {
+	report := func(gaveAlpha []sheetsync.RoleRow, gaveSpecial []sheetsync.RoleRow, gaveWhale []sheetsync.RoleRow, gaveFanbox []sheetsync.RoleRow, removedRoles []sheetsync.RoleRow, wasBanned []sheetsync.RoleRow, errors []sheetsync.RoleRow) {
 		resp := "Here's what would sync!```"
 		resp += fmt.Sprintf("Grant Alpha role to %d members", len(gaveAlpha))
 		resp += fmt.Sprintf("\nGrant Special role to %d members", len(gaveSpecial))
 		resp += fmt.Sprintf("\nGrant Whale role to %d members", len(gaveWhale))
+		resp += fmt.Sprintf("\nGrant Fanbox role to %d members", len(gaveFanbox))
 		resp += fmt.Sprintf("\nRemove roles from %d members (%d because of bans)", len(removedRoles), len(wasBanned))
 		resp += "```"
 
 		respond(resp)
 	}
 
-	sheetsync.DoSyncGuild(svc, dm.GuildID, sheetID, page, ga, gs, gw, ra, rs, rw, report, false)
+	//sheetsync.DoSyncGuild(svc, dm.GuildID, sheetID, page, ga, gs, gw, gf, ra, rs, rw, rf, report, false)
+	sheetsync.DoSyncGuildV2(svc, dm.GuildID, sheetID, page, ga, gs, gw, gf, ra, rs, rw, rf, report, false)
 }

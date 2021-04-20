@@ -49,6 +49,7 @@ type RoleConfig struct {
 	Alpha   string `json:"alpha" bson:"alpha"`
 	Special string `json:"special" bson:"special"`
 	Whale   string `json:"whale" bson:"whale"`
+	Fanbox  string `json:"fanbox" bson:"fanbox"`
 	Former  string `json:"former" bson:"former"`
 	Mute    string `json:"mute" bson:"mute"`
 }
@@ -96,6 +97,7 @@ var GrantRoles = map[string]RoleConfig{
 		Alpha:   "760705266953355295",
 		Special: "783112023570513970",
 		Whale:   "761570574794489886",
+		Fanbox:  "",
 		Former:  "782479385185615953",
 	},
 }
@@ -304,6 +306,17 @@ func WhaleRole(guildID string) string {
 	return guildRoles.Whale
 }
 
+// FanboxRole get the designated Fanbox role for the given guild
+func FanboxRole(guildID string) string {
+	guildRoles, ok := GrantRoles[guildID]
+	if !ok {
+		log.Printf("Could not find guild roles, %s", guildID)
+		return ""
+	}
+
+	return guildRoles.Fanbox
+}
+
 // FormerRole get the designated former member role for the given guild
 func FormerRole(guildID string) string {
 	guildRoles, ok := GrantRoles[guildID]
@@ -426,6 +439,29 @@ func SetWhaleRole(guildID, roleID string) error {
 	} else {
 		GrantRoles[guildID] = RoleConfig{
 			Whale: roleID,
+		}
+	}
+
+	return nil
+}
+
+func SetFanboxRole(guildID, roleID string) error {
+	key := fmt.Sprintf("grant_roles.%s.fanbox", guildID)
+	update := bson.M{
+		key: roleID,
+	}
+
+	err := UpdateConfig(update)
+	if err != nil {
+		return err
+	}
+
+	if v, ok := GrantRoles[guildID]; ok {
+		v.Fanbox = roleID
+		GrantRoles[guildID] = v
+	} else {
+		GrantRoles[guildID] = RoleConfig{
+			Fanbox: roleID,
 		}
 	}
 

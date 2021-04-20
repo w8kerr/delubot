@@ -374,6 +374,64 @@ func (m *Mux) WhaleRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Conte
 	respond("No Whale role is configured")
 }
 
+func (m *Mux) FanboxRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
+	respond := GetResponder(ds, dm)
+
+	roles, err := ds.GuildRoles(dm.GuildID)
+	if err != nil {
+		respond(err.Error())
+		return
+	}
+
+	ctx.Content = strings.TrimPrefix(ctx.Content, "fanboxrole")
+	ctx.Content = strings.TrimSpace(ctx.Content)
+	if ctx.Content == "clear" {
+		err = config.SetFanboxRole(dm.GuildID, "")
+		if err != nil {
+			respond(fmt.Sprintf("Failed to clear fanbox role, %s", err))
+			return
+		}
+
+		respond("Fanbox role cleared")
+		return
+	} else if ctx.Content != "" {
+		roleID := ""
+		roleName := ""
+		for _, role := range roles {
+			if role.ID == ctx.Content || role.Name == ctx.Content {
+				roleID = role.ID
+				roleName = role.Name
+				break
+			}
+		}
+
+		if roleID == "" {
+			respond(fmt.Sprintf("No role found matching ID or Name `%s`", ctx.Content))
+			return
+		}
+
+		err = config.SetFanboxRole(dm.GuildID, roleID)
+		if err != nil {
+			respond(fmt.Sprintf("Failed to set fanbox role, %s", err))
+			return
+		}
+
+		respond(fmt.Sprintf("Fanbox role set to %s (`%s`)", roleName, roleID))
+		return
+	}
+
+	fanboxRoleID := config.FanboxRole(dm.GuildID)
+	for _, role := range roles {
+		if role.ID == fanboxRoleID {
+			resp := fmt.Sprintf("Fanbox role: %s (`%s`)", role.Name, role.ID)
+			respond(resp)
+			return
+		}
+	}
+
+	respond("No Fanbox role is configured")
+}
+
 func (m *Mux) FormerRole(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	respond := GetResponder(ds, dm)
 
