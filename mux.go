@@ -35,7 +35,7 @@ func init() {
 		// Remote only commands
 		Router.Route("ytcopy", "Copy messages from the channel to a specified Youtube chat", Router.YoutubeCopy, models.AL_DEV)
 		Router.Route("endcopy", "Stop copying messages from the channel to Youtube", Router.EndYoutubeCopy, models.AL_DEV)
-		Router.Route("clearuntil", "Clear messages from the channel until reaching the replied-to message", Router.ClearUntil, models.AL_MOD)
+		Router.Route("clear", "Clear messages from the channel until reaching the replied-to message", Router.ClearUntil, models.AL_STAFF)
 		Router.Route("help", "Display this message.", Router.Help, models.AL_STAFF)
 		Router.Route("mods", "List people with moderator permissions", Router.Mods, models.AL_MOD)
 		Router.Route("countmembers", "Count the members on the server.", Router.CountMembers, models.AL_STAFF)

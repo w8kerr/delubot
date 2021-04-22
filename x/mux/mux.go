@@ -83,7 +83,7 @@ func (m *Mux) FuzzyMatch(msg string) (*Route, []string) {
 
 	// Search though the command list for a match
 	var r *Route
-	var rank int
+	// var rank int
 
 	var fk int
 	for fk, fv := range fields {
@@ -96,12 +96,12 @@ func (m *Mux) FuzzyMatch(msg string) (*Route, []string) {
 			}
 
 			// Some "Fuzzy" searching...
-			if strings.HasPrefix(rv.Pattern, fv) {
-				if len(fv) > rank {
-					r = rv
-					rank = len(fv)
-				}
-			}
+			// if strings.HasPrefix(rv.Pattern, fv) {
+			// 	if len(fv) > rank {
+			// 		r = rv
+			// 		rank = len(fv)
+			// 	}
+			// }
 		}
 	}
 	return r, fields[fk:]
