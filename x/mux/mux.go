@@ -236,7 +236,7 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 
 	// Catch the special "!clear" command, alias it to a real command
 	if strings.HasPrefix(ctx.Content, "!clear") {
-		ctx.Content = strings.TrimSpace(m.Prefix) + " clearuntil" + strings.TrimPrefix(ctx.Content, "!clear")
+		ctx.Content = strings.TrimSpace(m.Prefix) + " clear" + strings.TrimPrefix(ctx.Content, "!clear")
 	}
 
 	// Fetch the channel for this Message
