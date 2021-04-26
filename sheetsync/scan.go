@@ -131,14 +131,27 @@ func SyncGuild(svc *sheets.Service, guildID string) {
 				*failed = true
 			} else {
 				*updated = true
-				if HasRole(member, formerRole) {
-					err = Session.GuildMemberRoleRemove(guildID, member.User.ID, formerRole)
-					*errors = append(*errors, entry)
-				}
 			}
 		}
 	}
-	ensureSpecial := func(member *discordgo.Member, entry RoleRow, errors *[]RoleRow, updated *bool, failed *bool) {
+	// ensureSpecial := func(member *discordgo.Member, entry RoleRow, errors *[]RoleRow, updated *bool, failed *bool) {
+	// 	if !roleGrant {
+	// 		return
+	// 	}
+	// 	if HasRole(member, muteRole) {
+	// 		return
+	// 	}
+	// 	if !HasRole(member, specialRole) {
+	// 		err := Session.GuildMemberRoleAdd(guildID, member.User.ID, specialRole)
+	// 		if err != nil {
+	// 			*errors = append(*errors, entry)
+	// 			*failed = true
+	// 		} else {
+	// 			*updated = true
+	// 		}
+	// 	}
+	// }
+	ensureSpecialV2 := func(member *discordgo.Member, entry RoleRow, errors *[]RoleRow, updated *bool, failed *bool) {
 		if !roleGrant {
 			return
 		}
@@ -150,8 +163,16 @@ func SyncGuild(svc *sheets.Service, guildID string) {
 			if err != nil {
 				*errors = append(*errors, entry)
 				*failed = true
+				return
 			} else {
 				*updated = true
+			}
+		}
+		if !HasRole(member, formerRole) {
+			err := Session.GuildMemberRoleAdd(guildID, member.User.ID, formerRole)
+			if err != nil {
+				*errors = append(*errors, entry)
+				*failed = true
 			}
 		}
 	}
@@ -275,7 +296,7 @@ func SyncGuild(svc *sheets.Service, guildID string) {
 	}
 
 	// DoSyncGuild(svc, guildID, sheetID, page, ensureAlpha, ensureSpecial, ensureWhale, ensureFanbox, ensureNoAlpha, ensureNoSpecial, ensureNoWhale, ensureNoFanbox, report, true)
-	DoSyncGuildV2(svc, guildID, sheetID, page, ensureAlphaV2, ensureSpecial, ensureWhale, ensureFanbox, ensureNoAlpha, ensureNoSpecial, ensureNoWhale, ensureNoFanbox, report, true)
+	DoSyncGuildV2(svc, guildID, sheetID, page, ensureAlphaV2, ensureSpecialV2, ensureWhale, ensureFanbox, ensureNoAlpha, ensureNoSpecial, ensureNoWhale, ensureNoFanbox, report, true)
 }
 
 func DoSyncGuild(svc *sheets.Service, guildID string, sheetID string, page *sheets.Sheet,
@@ -514,9 +535,6 @@ func DoSyncGuildV2(svc *sheets.Service, guildID string, sheetID string, page *sh
 				}
 				if entry.Plan < 1500 {
 					ensureNoSpecial(member, entry, &errors, &updated, &failed)
-				}
-				if entry.Plan < 5000 {
-					ensureNoWhale(member, entry, &errors, &updated, &failed)
 				}
 
 				if updated {
