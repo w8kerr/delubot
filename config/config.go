@@ -702,3 +702,7 @@ func PrintTime(t time.Time) string {
 func Now() time.Time {
 	return time.Now().In(Loc)
 }
+
+func MessageLink(msg *discordgo.Message) string {
+	return fmt.Sprintf("https://discord.com/channels/%s/%s/%s", msg.GuildID, msg.ChannelID, msg.ID)
+}

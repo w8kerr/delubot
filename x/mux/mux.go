@@ -15,6 +15,7 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"github.com/w8kerr/delubot/config"
 	"github.com/w8kerr/delubot/mongo"
+	"github.com/w8kerr/delubot/utils"
 )
 
 // Route holds information about a specific message route handler
@@ -118,6 +119,40 @@ type MessageLog struct {
 	Time            time.Time
 }
 
+func ImageCopyEmbeds(ds *discordgo.Session, msg *discordgo.Message) []*discordgo.MessageEmbed {
+	channel, _ := ds.Channel(msg.ChannelID)
+
+	embeds := []*discordgo.MessageEmbed{}
+
+	for _, attachment := range msg.Attachments {
+		embed := &discordgo.MessageEmbed{
+			Color: 3066993,
+			Thumbnail: &discordgo.MessageEmbedThumbnail{
+				URL: msg.Author.AvatarURL("64"),
+			},
+			Author: &discordgo.MessageEmbedAuthor{
+				Name: msg.Author.Username,
+			},
+			Description: "File: " + attachment.URL + "\n\nMessage: " + config.MessageLink(msg),
+			Footer: &discordgo.MessageEmbedFooter{
+				Text: channel.Name,
+			},
+			Timestamp: string(msg.Timestamp),
+		}
+
+		embed.Image = &discordgo.MessageEmbedImage{
+			URL:      attachment.URL,
+			ProxyURL: attachment.ProxyURL,
+		}
+		embed.Video = &discordgo.MessageEmbedVideo{
+			URL: attachment.URL,
+		}
+		embeds = append(embeds, embed)
+	}
+
+	return embeds
+}
+
 // OnMessageCreate is a DiscordGo Event Handler function.  This must be
 // registered using the DiscordGo.Session.AddHandler function.  This function
 // will receive all Discord messages and parse them for matches to registered
@@ -130,6 +165,20 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 	abort := m.EnsureSticky(db, ds, mc.Message)
 	if abort {
 		return
+	}
+
+	// Copy images so they can still be referenced
+	if mc.Author.ID != ds.State.User.ID && mc.GuildID == "755437328515989564" && len(mc.Message.Attachments) > 0 {
+		utils.PrintJSON(mc.Message)
+		embeds := ImageCopyEmbeds(ds, mc.Message)
+		for _, embed := range embeds {
+			imageDumpChannel := "840804942326530088"
+			ds.ChannelMessageSendEmbed(imageDumpChannel, embed)
+			// ds.ChannelMessageSendComplex(imageDumpChannel, &discordgo.MessageSend{
+			// 	Content: mc.Message.Attachments[0].URL,
+			// 	Embed:   embed,
+			// })
+		}
 	}
 
 	m.LogMessageCreate(db, ds, mc, nil)
@@ -201,11 +250,13 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		channelName = err.Error()
 	}
 
-	// 1 in 200 chance for a :delucringe: response on every message
+	// 1 in 20000 chance for a :delucringe: response on every message
 	randNum := rand.Intn(20000)
 	// fmt.Println("Check random", randNum)
 	if randNum == 0 && channel.ParentID != "779849308525690900" {
-		ds.ChannelMessageSendReply(mc.Message.ChannelID, config.Emoji("delucringe"), mc.Message.Reference())
+		msg, _ := ds.ChannelMessageSendReply(mc.Message.ChannelID, config.Emoji("delucringe"), mc.Message.Reference())
+		// ds.ChannelMessageSend("", fmt.Sprintf("Cringed! %s", msg.))
+		fmt.Println("Cringed!", msg)
 	}
 
 	// Ignore all messages by non-moderators
