@@ -31,8 +31,10 @@ func (m *Mux) YoutubeCopy(ds *discordgo.Session, dm *discordgo.Message, ctx *Con
 	prefix := strings.Join(parts[1:], " ")
 
 	if prefix == "" {
-		prefix = "[Discord🤖|EN] "
+		prefix = "[Discord🤖|EN]"
 	}
+
+	prefix += " "
 
 	session := mongo.MDB.Clone()
 	defer session.Close()
@@ -110,7 +112,7 @@ func StartCopyEmbed(cp config.CopyPipeline) *discordgo.MessageEmbed {
 		// Author: &discordgo.MessageEmbedAuthor{
 		// 	Name: sticky.AuthorName,
 		// },
-		Description: fmt.Sprintf("Now copying messages in this channel to \"\"\nPrefix: `%s`\nType `-db endcopy` to end", cp.Prefix),
+		Description: fmt.Sprintf("Now copying messages in this channel to \"%s\"\nPrefix: `%s`\nType `-db endcopy` to end", cp.YoutubeVideoTitle, cp.Prefix),
 		Footer: &discordgo.MessageEmbedFooter{
 			Text: cp.CreatedByName,
 		},
@@ -174,6 +176,15 @@ func (m *Mux) CopyMessageToYoutube(ds *discordgo.Session, dm *discordgo.Message,
 
 func RemoveUnwantedElements(text string) (string, bool) {
 	if strings.HasPrefix(text, "-db") {
+		return "", true
+	}
+	if strings.HasPrefix(text, "*") {
+		return "", true
+	}
+	if strings.HasPrefix(text, "[") && strings.HasSuffix(text, "]") {
+		return "", true
+	}
+	if strings.HasPrefix(text, "```") && strings.HasSuffix(text, "```") {
 		return "", true
 	}
 	return text, false
