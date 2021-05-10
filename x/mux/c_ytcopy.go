@@ -13,6 +13,8 @@ import (
 	"github.com/w8kerr/delubot/youtubesvc"
 )
 
+var YTSvc *youtubesvc.UserYoutubeService
+
 func (m *Mux) YoutubeCopy(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
 	respond := GetResponder(ds, dm)
 
@@ -70,6 +72,13 @@ func (m *Mux) YoutubeCopy(ds *discordgo.Session, dm *discordgo.Message, ctx *Con
 		return
 	}
 
+	if YTSvc == nil {
+		YTSvc, err = youtubesvc.NewUserYoutubeService(config.YoutubeOauthToken, &config.YoutubeRefreshToken)
+		if err != nil {
+			fmt.Println("Error", err)
+		}
+	}
+
 	ds.ChannelMessageSendEmbed(dm.ChannelID, StartCopyEmbed(cp))
 }
 
@@ -113,9 +122,12 @@ func StartCopyEmbed(cp config.CopyPipeline) *discordgo.MessageEmbed {
 func (m *Mux) CopyMessageToYoutube(ds *discordgo.Session, dm *discordgo.Message, cp config.CopyPipeline) {
 	respond := GetResponder(ds, dm)
 
-	svc, err := youtubesvc.NewUserYoutubeService(config.YoutubeOauthToken, &config.YoutubeRefreshToken)
-	if err != nil {
-		fmt.Println("Error", err)
+	var err error
+	if YTSvc == nil {
+		YTSvc, err = youtubesvc.NewUserYoutubeService(config.YoutubeOauthToken, &config.YoutubeRefreshToken)
+		if err != nil {
+			fmt.Println("Error", err)
+		}
 	}
 
 	text, err := dm.ContentWithMoreMentionsReplaced(ds)
@@ -140,7 +152,7 @@ func (m *Mux) CopyMessageToYoutube(ds *discordgo.Session, dm *discordgo.Message,
 			nextWord = " " + nextWord
 		}
 		if len(output)+len(nextWord) > characterLimit {
-			_, err = svc.SendChatMessage(cp.YoutubeLivechatID, cp.Prefix+output)
+			_, err = YTSvc.SendChatMessage(cp.YoutubeLivechatID, cp.Prefix+output)
 			fmt.Println("Sent youtube message,", cp.Prefix+output)
 			if err != nil {
 				respond(fmt.Sprintf("🔺Failed to copy message to Youtube: %s", err))
@@ -152,7 +164,7 @@ func (m *Mux) CopyMessageToYoutube(ds *discordgo.Session, dm *discordgo.Message,
 			output += nextWord
 		}
 	}
-	_, err = svc.SendChatMessage(cp.YoutubeLivechatID, cp.Prefix+output)
+	_, err = YTSvc.SendChatMessage(cp.YoutubeLivechatID, cp.Prefix+output)
 	fmt.Println("Sent youtube message,", cp.Prefix+output)
 	if err != nil {
 		respond(fmt.Sprintf("🔺Failed to copy message to Youtube: %s", err))

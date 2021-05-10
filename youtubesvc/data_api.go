@@ -24,11 +24,15 @@ type UserYoutubeService struct {
 	log     *logrus.Entry
 }
 
+func (svc *UserYoutubeService) Service() *youtube.Service {
+	return svc.service
+}
+
 func NewUserYoutubeService(token string, refreshToken *string) (*UserYoutubeService, error) {
 	ctx := context.Background()
 
 	log := logrus.WithField("svc", "YoutubeService")
-	log.WithField("token", token).WithField("refreshToken", *refreshToken).Info("Initialized user Youtube service")
+	log.WithField("token", token).WithField("refreshToken", *refreshToken).Info("Initializing user Youtube service")
 
 	// Service account based oauth2 two legged integration
 	tokenObj := &oauth2.Token{
