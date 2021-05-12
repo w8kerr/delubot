@@ -145,6 +145,8 @@ var Extractions = make(map[string]Extraction)
 
 var CopyPipelines = []CopyPipeline{}
 
+var DoubleTL = false
+
 type BotConfig struct {
 	ModeratorRoles         map[string][]string   `json:"moderator_roles" bson:"moderator_roles"`
 	StaffRoles             map[string][]string   `json:"staff_roles" bson:"staff_roles"`
@@ -210,6 +212,7 @@ func LoadConfig() error {
 	EightBallEnabled = config.EightBallEnabled
 	TweetSyncChannels = config.TweetSyncChannels
 	CopyPipelines = config.CopyPipelines
+	DoubleTL = config.DoubleTL
 
 	if GrantRoles == nil {
 		GrantRoles = make(map[string]RoleConfig)
@@ -574,6 +577,20 @@ func SetEightBallEnabled(enabled bool) error {
 	}
 
 	EightBallEnabled = enabled
+	return nil
+}
+
+func SetDoubleTLEnabled(enabled bool) error {
+	update := bson.M{
+		"double_tl": enabled,
+	}
+
+	err := UpdateConfig(update)
+	if err != nil {
+		return err
+	}
+
+	DoubleTL = enabled
 	return nil
 }
 
