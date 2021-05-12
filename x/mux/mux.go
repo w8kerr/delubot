@@ -425,8 +425,9 @@ func (m *Mux) OnMessageDelete(ds *discordgo.Session, md *discordgo.MessageDelete
 			return
 		}
 
+		copyMsg := fmt.Sprintf("**%s:** %s", deleted.UserName, deleted.Content)
 		for _, msg := range msgs {
-			if msg.Content == deleted.Content {
+			if msg.Content == copyMsg {
 				err = ds.ChannelMessageDelete(msg.ChannelID, msg.ID)
 				if err != nil {
 					fmt.Println("DoubleTL - Failed to delete message", msg.ChannelID, msg.ID)
@@ -494,15 +495,22 @@ func (m *Mux) OnMessageUpdate(ds *discordgo.Session, mu *discordgo.MessageUpdate
 	})
 
 	if config.DoubleTL && mu.ChannelID == PublicTLChannel {
+		if mu.BeforeUpdate == nil {
+			fmt.Println("DoubleTL - Can't update message, old message was not in cache")
+			return
+		}
+
 		msgs, err := ds.ChannelMessages(mu.ChannelID, 20, "", "", "")
 		if err != nil {
 			fmt.Println("DoubleTL - Failed to get messages!", mu.ChannelID, err)
 			return
 		}
 
+		copyMsg := fmt.Sprintf("**%s:** %s", mu.BeforeUpdate.Author.Username, mu.BeforeUpdate.Content)
+		updateMsg := fmt.Sprintf("**%s:** %s", mu.Author.Username, mu.Content)
 		for _, msg := range msgs {
-			if msg.Content == mu.Content {
-				_, err = ds.ChannelMessageEdit(msg.ChannelID, msg.ID, mu.Content)
+			if msg.Content == copyMsg {
+				_, err = ds.ChannelMessageEdit(msg.ChannelID, msg.ID, updateMsg)
 				if err != nil {
 					fmt.Println("DoubleTL - Failed to edit message", msg.ChannelID, msg.ID)
 				}
