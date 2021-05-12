@@ -153,6 +153,9 @@ func ImageCopyEmbeds(ds *discordgo.Session, msg *discordgo.Message) []*discordgo
 	return embeds
 }
 
+var PublicTLChannel = "796526853442895915"
+var MembersTLChannel = "776620304888889374"
+
 // OnMessageCreate is a DiscordGo Event Handler function.  This must be
 // registered using the DiscordGo.Session.AddHandler function.  This function
 // will receive all Discord messages and parse them for matches to registered
@@ -225,11 +228,9 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 	}
 
 	// Handle public-to-private copy pipeline
-	publicTLChannel := "796526853442895915"
-	membersTLChannel := "776620304888889374"
-	if config.DoubleTL && mc.ChannelID == publicTLChannel {
+	if config.DoubleTL && mc.ChannelID == PublicTLChannel {
 		copyMsg := fmt.Sprintf("**%s:** %s", mc.Author.Username, mc.Content)
-		ds.ChannelMessageSend(membersTLChannel, copyMsg)
+		ds.ChannelMessageSend(MembersTLChannel, copyMsg)
 	}
 
 	// if mc.Content == config.Emoji("delucringe") {
@@ -416,6 +417,24 @@ func (m *Mux) OnMessageDelete(ds *discordgo.Session, md *discordgo.MessageDelete
 		Action:      "delete",
 		Time:        time.Now(),
 	})
+
+	if config.DoubleTL && md.ChannelID == PublicTLChannel {
+		msgs, err := ds.ChannelMessages(md.ChannelID, 20, "", "", "")
+		if err != nil {
+			fmt.Println("DoubleTL - Failed to get messages!", md.ChannelID, err)
+			return
+		}
+
+		for _, msg := range msgs {
+			if msg.Content == deleted.Content {
+				err = ds.ChannelMessageDelete(msg.ChannelID, msg.ID)
+				if err != nil {
+					fmt.Println("DoubleTL - Failed to delete message", msg.ChannelID, msg.ID)
+				}
+				return
+			}
+		}
+	}
 }
 
 func (m *Mux) OnMessageDeleteBulk(ds *discordgo.Session, mdb *discordgo.MessageDeleteBulk) {
@@ -473,6 +492,24 @@ func (m *Mux) OnMessageUpdate(ds *discordgo.Session, mu *discordgo.MessageUpdate
 		Action:      "edit",
 		Time:        time.Now(),
 	})
+
+	if config.DoubleTL && mu.ChannelID == PublicTLChannel {
+		msgs, err := ds.ChannelMessages(mu.ChannelID, 20, "", "", "")
+		if err != nil {
+			fmt.Println("DoubleTL - Failed to get messages!", mu.ChannelID, err)
+			return
+		}
+
+		for _, msg := range msgs {
+			if msg.Content == mu.Content {
+				_, err = ds.ChannelMessageEdit(msg.ChannelID, msg.ID, mu.Content)
+				if err != nil {
+					fmt.Println("DoubleTL - Failed to edit message", msg.ChannelID, msg.ID)
+				}
+				return
+			}
+		}
+	}
 }
 
 func (m *Mux) LogMessageCreate(db *mgo.Database, ds *discordgo.Session, mc *discordgo.MessageCreate, channelName *string) {
