@@ -491,7 +491,7 @@ func (m *Mux) LogMessageCreate(db *mgo.Database, ds *discordgo.Session, mc *disc
 	})
 }
 
-var Pushpin = "\U0001F53A"
+var Pushpin = "\U0001F4CC"
 
 func (m *Mux) AddReaction(ds *discordgo.Session, ra *discordgo.MessageReactionAdd) {
 	// Don't react to the bot's own reactions
