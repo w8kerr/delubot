@@ -62,7 +62,7 @@ func IsStaff(ds *discordgo.Session, dm *discordgo.MessageCreate) bool {
 }
 
 // IsStaffReaction check if a user is a staff member (on a reaction rather than a message)
-func IsStaff(ds *discordgo.Session, ra *discordgo.MessageReactionAdd) bool {
+func IsStaffReaction(ds *discordgo.Session, ra *discordgo.MessageReactionAdd) bool {
 	member, err := ds.GuildMember(ra.GuildID, ra.UserID)
 	if err != nil {
 		log.Printf("error getting user's member, %s", err)
