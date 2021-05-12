@@ -517,6 +517,13 @@ func (m *Mux) AddReaction(ds *discordgo.Session, ra *discordgo.MessageReactionAd
 			m.CancelExtraction(ds, e)
 		}
 	}
+
+	if ra.Emoji.Name == "📌" && IsStaffReaction(ds, ra) {
+		err := ds.ChannelMessagePin(ra.ChannelID, ra.MessageID)
+		if err != nil {
+			ds.ChannelMessageSend(ra.ChannelID, fmt.Sprintf("Failed to pin message: %s", err))
+		}
+	}
 }
 
 func (m *Mux) RemoveReaction(ds *discordgo.Session, rr *discordgo.MessageReactionRemove) {

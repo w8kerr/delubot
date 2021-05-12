@@ -59,7 +59,31 @@ func IsStaff(ds *discordgo.Session, dm *discordgo.MessageCreate) bool {
 	}
 
 	return false
+}
 
+// IsStaffReaction check if a user is a staff member (on a reaction rather than a message)
+func IsStaff(ds *discordgo.Session, ra *discordgo.MessageReactionAdd) bool {
+	member, err := ds.GuildMember(ra.GuildID, ra.UserID)
+	if err != nil {
+		log.Printf("error getting user's member, %s", err)
+		return false
+	}
+
+	guildMods, ok := config.StaffRoles[ra.GuildID]
+	if !ok {
+		log.Printf("Could not find guild roles, %s", ra.GuildID)
+		return false
+	}
+
+	for _, modRole := range guildMods {
+		for _, memberRole := range member.Roles {
+			if modRole == memberRole {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // HasAccess check if a user has the specified access level
