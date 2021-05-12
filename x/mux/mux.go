@@ -224,6 +224,14 @@ func (m *Mux) OnMessageCreate(ds *discordgo.Session, mc *discordgo.MessageCreate
 		}
 	}
 
+	// Handle public-to-private copy pipeline
+	publicTLChannel := "796526853442895915"
+	membersTLChannel := "776620304888889374"
+	if config.DoubleTL && mc.ChannelID == publicTLChannel {
+		copyMsg := fmt.Sprintf("**%s:** %s", mc.Author.Username, mc.Content)
+		ds.ChannelMessageSend(membersTLChannel, copyMsg)
+	}
+
 	// if mc.Content == config.Emoji("delucringe") {
 	// 	doDelete := false
 	// 	if mc.Message.MessageReference != nil {

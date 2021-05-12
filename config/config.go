@@ -163,6 +163,7 @@ type BotConfig struct {
 	EightBallEnabled       bool                  `json:"eight_ball_enabled" bson:"eight_ball_enabled"`
 	TweetSyncChannels      []TweetSyncConfig     `json:"tweet_sync_channels" bson:"tweet_sync_channels"`
 	CopyPipelines          []CopyPipeline        `json:"copy_pipelines" bson:"copy_pipelines"`
+	DoubleTL               bool                  `json:"double_tl" bson:"double_tl"`
 }
 
 // Get Load the config object
