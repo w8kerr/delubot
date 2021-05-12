@@ -491,6 +491,8 @@ func (m *Mux) LogMessageCreate(db *mgo.Database, ds *discordgo.Session, mc *disc
 	})
 }
 
+var Pushpin = "\U0001F53A"
+
 func (m *Mux) AddReaction(ds *discordgo.Session, ra *discordgo.MessageReactionAdd) {
 	// Don't react to the bot's own reactions
 	if ra.UserID == ds.State.User.ID {
@@ -536,7 +538,7 @@ func (m *Mux) RemoveReaction(ds *discordgo.Session, rr *discordgo.MessageReactio
 	}
 
 	if rr.Emoji.Name == "📌" && IsStaff(ds, rr.GuildID, rr.UserID) {
-		users, err := ds.MessageReactions(rr.ChannelID, rr.MessageID, rr.Emoji.ID, 0, "", "")
+		users, err := ds.MessageReactions(rr.ChannelID, rr.MessageID, Pushpin, 100, "", "")
 		if err != nil {
 			ds.ChannelMessageSend(rr.ChannelID, fmt.Sprintf("Failed to get reactions: %s", err))
 			return
