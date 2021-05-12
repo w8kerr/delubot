@@ -425,7 +425,7 @@ func (m *Mux) OnMessageDelete(ds *discordgo.Session, md *discordgo.MessageDelete
 			return
 		}
 
-		copyMsg := fmt.Sprintf("**%s:** %s", deleted.UserName, deleted.Content)
+		copyMsg := fmt.Sprintf("**%s:** %s", strings.Split(deleted.UserName, "#")[0], deleted.Content)
 		fmt.Println("Look for message to delete")
 		fmt.Println(copyMsg)
 		for _, msg := range msgs {
@@ -509,9 +509,12 @@ func (m *Mux) OnMessageUpdate(ds *discordgo.Session, mu *discordgo.MessageUpdate
 			return
 		}
 
-		copyMsg := fmt.Sprintf("**%s:** %s", edited.UserName, edited.Content)
+		copyMsg := fmt.Sprintf("**%s:** %s", strings.Split(edited.UserName, "#")[0], edited.Content)
+		fmt.Println("Look for message to edit")
+		fmt.Println(copyMsg)
 		updateMsg := fmt.Sprintf("**%s:** %s", mu.Author.Username, mu.Content)
 		for _, msg := range msgs {
+			fmt.Println(msg.Content)
 			if msg.Content == copyMsg {
 				_, err = ds.ChannelMessageEdit(msg.ChannelID, msg.ID, updateMsg)
 				if err != nil {
