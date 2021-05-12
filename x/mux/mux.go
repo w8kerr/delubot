@@ -518,7 +518,7 @@ func (m *Mux) AddReaction(ds *discordgo.Session, ra *discordgo.MessageReactionAd
 		}
 	}
 
-	if ra.Emoji.Name == "📌" && IsStaffReaction(ds, ra) {
+	if ra.Emoji.Name == "📌" && IsStaff(ds, ra.GuildID, ra.UserID) {
 		err := ds.ChannelMessagePin(ra.ChannelID, ra.MessageID)
 		if err != nil {
 			ds.ChannelMessageSend(ra.ChannelID, fmt.Sprintf("Failed to pin message: %s", err))
@@ -533,5 +533,24 @@ func (m *Mux) RemoveReaction(ds *discordgo.Session, rr *discordgo.MessageReactio
 	}
 	if channelID, ok := config.Proposals[rr.MessageID]; ok {
 		m.UpdateProposal(ds, rr.GuildID, channelID, rr.MessageID)
+	}
+
+	if rr.Emoji.Name == "📌" && IsStaff(ds, rr.GuildID, rr.UserID) {
+		users, err := ds.MessageReactions(rr.ChannelID, rr.MessageID, rr.Emoji.ID, 0, "", "")
+		if err != nil {
+			ds.ChannelMessageSend(rr.ChannelID, fmt.Sprintf("Failed to get reactions: %s", err))
+			return
+		}
+		for _, user := range users {
+			if IsStaff(ds, rr.GuildID, user.ID) {
+				// There's still a staff pin so don't unpin
+				return
+			}
+		}
+
+		err = ds.ChannelMessageUnpin(rr.ChannelID, rr.MessageID)
+		if err != nil {
+			ds.ChannelMessageSend(rr.ChannelID, fmt.Sprintf("Failed to unpin message: %s", err))
+		}
 	}
 }
