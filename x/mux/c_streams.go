@@ -138,11 +138,20 @@ func StreamsEmbed(mans []ManualStream, recs []models.YoutubeStreamRecord) *disco
 			continue
 		}
 
-		man.Time = man.Time.In(Loc)
-		fields = append(fields, &discordgo.MessageEmbedField{
-			Name:  "🔺" + man.Title,
-			Value: fmt.Sprintf("%s\n%s", TimeBefore(man.Time), config.PrintTime(man.Time)),
-		})
+		if man.GuerrillaTime == "" {
+			man.Time = man.Time.In(Loc)
+			fields = append(fields, &discordgo.MessageEmbedField{
+				Name:  "🔺" + man.Title,
+				Value: fmt.Sprintf("%s\n%s", TimeBefore(man.Time), config.PrintTime(man.Time)),
+			})
+		} else {
+			man.Time = man.Time.In(Loc)
+			fields = append(fields, &discordgo.MessageEmbedField{
+				Name:  "🔺" + man.Title,
+				Value: fmt.Sprintf("%s\n%s (%s)", EightHourRange(man.Time), config.PrintDate(man.Time), man.GuerrillaTime),
+			})
+		}
+
 	}
 
 	if len(recs) > 0 {
@@ -181,9 +190,54 @@ func TimeBefore(t time.Time) string {
 	return fmt.Sprintf("%s (%.1f Δs) from now", strings.Join(parts, ", "), deltas)
 }
 
+func EightHourRange(t time.Time) string {
+	currentTime := time.Now()
+	lRange := t.Add(-4 * time.Hour)
+	uRange := t.Add(4 * time.Hour)
+
+	if currentTime.After(lRange) {
+		return "Any time now!"
+	}
+
+	lDiff := lRange.Sub(currentTime)
+
+	lTotal := int(lDiff.Seconds())
+	lDays := int(lTotal / (60 * 60 * 24))
+	lHours := int(lTotal / (60 * 60) % 24)
+
+	uDiff := uRange.Sub(currentTime)
+
+	uTotal := int(uDiff.Seconds())
+	uDays := int(uTotal / (60 * 60 * 24))
+	uHours := int(uTotal / (60 * 60) % 24)
+
+	parts := []string{}
+
+	if lDays > 0 {
+		if lDays > 1 {
+			parts = append(parts, fmt.Sprintf("〜 %d days and", lDays))
+		} else {
+			parts = append(parts, fmt.Sprintf("〜 %d day and", lDays))
+		}
+	}
+	parts = append(parts, fmt.Sprintf("%d hours", lHours))
+	parts = append(parts, "to")
+	if uDays > 0 {
+		if lDays > 1 {
+			parts = append(parts, fmt.Sprintf("〜 %d days and", uDays))
+		} else {
+			parts = append(parts, fmt.Sprintf("〜 %d day and", uDays))
+		}
+	}
+	parts = append(parts, fmt.Sprintf("%d hours", uHours))
+
+	return fmt.Sprintf("%s from now", strings.Join(parts, " "))
+}
+
 type ManualStream struct {
-	Time  time.Time `json:"time" bson:"time"`
-	Title string    `json:"title" bson:"title"`
+	Time          time.Time `json:"time" bson:"time"`
+	Title         string    `json:"title" bson:"title"`
+	GuerrillaTime string    `json:"guerrilla_time" bson:"guerrilla_time"`
 }
 
 func (ms *ManualStream) ReplacedBy(recs []models.YoutubeStreamRecord) bool {
@@ -195,6 +249,47 @@ func (ms *ManualStream) ReplacedBy(recs []models.YoutubeStreamRecord) bool {
 	}
 
 	return false
+}
+
+var addGuerrillaRE = regexp.MustCompile(`(\d\d\d\d\/\d\d\/\d\d \d\d:\d\d) ([\S]+) (.+)`)
+
+func (m *Mux) AddGuerrilla(ds *discordgo.Session, dm *discordgo.Message, ctx *Context) {
+	respond := GetResponder(ds, dm)
+
+	cmd := strings.TrimSpace(strings.TrimPrefix(ctx.Content, "addstream"))
+
+	match := addStreamRE.FindAllSubmatch([]byte(cmd), -1)
+	if match == nil {
+		respond("🔺Usage: `-addguerrilla yyyy/mm/dd hh:mm <timing> <title>`")
+		return
+	}
+
+	timeStr := string(match[0][1])
+	guerStr := string(match[0][2])
+	titleStr := string(match[0][3])
+
+	Loc, _ := time.LoadLocation("Asia/Tokyo")
+	t, err := time.ParseInLocation("2006/01/02 15:04", timeStr, Loc)
+	if err != nil {
+		respond("🔺I don't understand that stream time :(\nUsage: `-addguerrilla yyyy/mm/dd hh:mm <timing> <title>` (" + err.Error() + ")")
+		return
+	}
+
+	session := mongo.MDB.Clone()
+	defer session.Close()
+	session.SetMode(mgo.Strong, false)
+	c := context.Background()
+	c = context.WithValue(c, "mgo", session)
+	db := session.DB(mongo.DB_NAME)
+
+	stream := ManualStream{
+		Time:          t,
+		Title:         titleStr,
+		GuerrillaTime: guerStr,
+	}
+	schedCol := db.C("scheduled_streams")
+	schedCol.Upsert(bson.M{"time": stream.Time}, stream)
+	respond("🔺Guerilla stream added at " + config.PrintDate(t) + " (" + guerStr + ")")
 }
 
 var addStreamRE = regexp.MustCompile(`(\d\d\d\d\/\d\d\/\d\d \d\d:\d\d) (.+)`)
