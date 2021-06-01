@@ -204,6 +204,7 @@ func LoadConfig() error {
 	RoleGrantEnabled = config.RoleGrantEnabled
 	RoleRemoveEnabled = config.RoleRemoveEnabled
 	TimeFormat = config.TimeFormat
+	DateFormat = config.DateFormat
 	GoogleCredentials = config.GoogleCredentials
 	GoogleCredentialsAlt1 = config.GoogleCredentialsAlt1
 	GoogleOauthCredentials = config.GoogleOauthCredentials
