@@ -56,7 +56,7 @@ func init() {
 		Router.Route("vf", "Grant past-month roles without verifying in the spreadsheet", Router.Verify, models.AL_STAFF)
 		Router.Route("vd", "Debug the verify command", Router.VDebug, models.AL_STAFF)
 		Router.Route("addstream", "Add a stream to the schedule manually ('yyyy/mm/dd hh:mm <title>')", Router.AddStream, models.AL_STAFF)
-		Router.Route("addguerrilla", "Add a guerrilla stream to the schedule manually ('yyyy/mm/dd hh:mm <timing> <title>')", Router.AddGuerrilla, models.AL_STAFF)
+		Router.Route("addguerrilla", "Add a guerrilla stream to the schedule manually ('yyyy/mm/dd hh:mm <est. time> <title>')", Router.AddGuerrilla, models.AL_STAFF)
 		Router.Route("removestream", "Remove a manually added stream ('yyyy/mm/dd hh:mm')", Router.RemoveStream, models.AL_STAFF)
 		Router.Route("streams", "Display upcoming streams", Router.Streams, models.AL_STAFF)
 		Router.Route("stream", "Display upcoming streams", Router.Stream, models.AL_STAFF)

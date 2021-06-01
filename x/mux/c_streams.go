@@ -258,9 +258,9 @@ func (m *Mux) AddGuerrilla(ds *discordgo.Session, dm *discordgo.Message, ctx *Co
 
 	cmd := strings.TrimSpace(strings.TrimPrefix(ctx.Content, "addstream"))
 
-	match := addStreamRE.FindAllSubmatch([]byte(cmd), -1)
+	match := addGuerrillaRE.FindAllSubmatch([]byte(cmd), -1)
 	if match == nil {
-		respond("🔺Usage: `-addguerrilla yyyy/mm/dd hh:mm <timing> <title>`")
+		respond("🔺Usage: `-addguerrilla yyyy/mm/dd hh:mm <est. time> <title>`")
 		return
 	}
 
@@ -271,7 +271,7 @@ func (m *Mux) AddGuerrilla(ds *discordgo.Session, dm *discordgo.Message, ctx *Co
 	Loc, _ := time.LoadLocation("Asia/Tokyo")
 	t, err := time.ParseInLocation("2006/01/02 15:04", timeStr, Loc)
 	if err != nil {
-		respond("🔺I don't understand that stream time :(\nUsage: `-addguerrilla yyyy/mm/dd hh:mm <timing> <title>` (" + err.Error() + ")")
+		respond("🔺I don't understand that stream time :(\nUsage: `-addguerrilla yyyy/mm/dd hh:mm <est. time> <title>` (" + err.Error() + ")")
 		return
 	}
 
