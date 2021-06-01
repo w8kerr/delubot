@@ -118,6 +118,7 @@ var LogChannels = map[string]string{
 var ErrorChannel = "793361959046217778"
 
 var TimeFormat string
+var DateFormat string
 
 var GoogleCredentials bson.M
 var GoogleCredentialsAlt1 bson.M
@@ -155,6 +156,7 @@ type BotConfig struct {
 	RoleGrantEnabled       map[string]bool       `json:"role_grant_enabled" bson:"role_grant_enabled"`
 	RoleRemoveEnabled      map[string]bool       `json:"role_remove_enabled" bson:"role_remove_enabled"`
 	TimeFormat             string                `json:"time_format" bson:"time_format"`
+	DateFormat             string                `json:"date_format" bson:"date_format"`
 	GoogleCredentials      bson.M                `json:"-" bson:"google_credentials"`
 	GoogleCredentialsAlt1  bson.M                `json:"-" bson:"google_credentials_alt1"`
 	GoogleOauthCredentials bson.M                `json:"-" bson:"google_oauth_credentials"`
@@ -715,6 +717,10 @@ func ParseTime(raw string) time.Time {
 
 func PrintTime(t time.Time) string {
 	return t.Format(TimeFormat)
+}
+
+func PrintDate(t time.Time) string {
+	return t.Format(DateFormat)
 }
 
 func Now() time.Time {
