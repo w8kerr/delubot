@@ -147,8 +147,8 @@ func StreamsEmbed(mans []ManualStream, recs []models.YoutubeStreamRecord) *disco
 		} else {
 			man.Time = man.Time.In(Loc)
 			fields = append(fields, &discordgo.MessageEmbedField{
-				Name:  "🔺" + man.Title,
-				Value: fmt.Sprintf("%s\n❓%s (%s)", EightHourRange(man.Time), config.PrintDate(man.Time), man.GuerrillaTime),
+				Name:  "🔺❓" + man.Title,
+				Value: fmt.Sprintf("%s\n%s (%s)", EightHourRange(man.Time), config.PrintDate(man.Time), man.GuerrillaTime),
 			})
 		}
 
