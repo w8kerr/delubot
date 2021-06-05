@@ -120,7 +120,7 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 				HumanTranslated: false,
 			}
 
-			if strings.HasPrefix(tweet.FullText, "@tos") {
+			if hasTOSMention(tweet) {
 				// Ignore this tweet and mark it as already translated so it doesn't interfere with the targeting of the command
 				st.HumanTranslated = true
 			} else {
@@ -158,6 +158,18 @@ func Scan(ds *discordgo.Session, tc *twitter.Client, ts *config.TweetSyncConfig)
 		// fmt.Println("Finished echoing tweets")
 		session.Close()
 	}
+}
+
+func hasTOSMention(t twitter.Tweet) bool {
+	if t.Entities == nil {
+		return false
+	}
+	for _, um := range t.Entities.UserMentions {
+		if um.ScreenName == "TOS" {
+			return true
+		}
+	}
+	return false
 }
 
 func SyncedTweetToEmbed(st models.SyncedTweet) *discordgo.MessageEmbed {
