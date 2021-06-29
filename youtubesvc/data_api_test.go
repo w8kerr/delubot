@@ -46,7 +46,7 @@ func Test_LiveChatID(t *testing.T) {
 		fmt.Println("Error", err)
 	}
 
-	id, title, err := svc.GetLivechatID("ZtqZgmARs4o")
+	id, title, err := svc.GetLivechatID("a7I2yMMGe3w")
 	if err != nil {
 		fmt.Println("Error", err)
 	}
@@ -63,13 +63,13 @@ func Test_SendChatMessage(t *testing.T) {
 
 	config.LoadConfig()
 
-	svc, err := NewUserYoutubeService(config.YoutubeOauthToken, &config.YoutubeRefreshToken)
+	svc, err := NewUserYoutubeService(config.YoutubeCredentials[0].OauthToken, &config.YoutubeCredentials[0].RefreshToken)
 	if err != nil {
 		fmt.Println("Error", err)
 	}
 
-	liveChatID := "Cg0KC1p0cVpnbUFSczRvKicKGFVDc0FKQnl1QzBTa2U2NG1DTjRPRHNhQRILWnRxWmdtQVJzNG8"
+	liveChatID := "Cg0KC2E3STJ5TU1HZTN3KicKGFVDc0FKQnl1QzBTa2U2NG1DTjRPRHNhQRILYTdJMnlNTUdlM3c"
 
-	sent, err := svc.SendChatMessage(liveChatID, "hello there!")
+	sent, err := svc.SendChatMessage(liveChatID, "I am the one who chats")
 	utils.PrintJSON(sent)
 }

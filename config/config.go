@@ -92,6 +92,12 @@ type CopyPipeline struct {
 	YoutubeLivechatID string `json:"youtube_livechat_id" bson:"youtube_livechat_id"`
 }
 
+type YoutubeCredential struct {
+	Email        string `json:"email" bson:"email"`
+	OauthToken   string `json:"oauth_token" bson:"oauth_token"`
+	RefreshToken string `json:"refresh_token" bson:"refresh_token"`
+}
+
 var GrantRoles = map[string]RoleConfig{
 	"755437328515989564": { // DFS
 		Alpha:   "760705266953355295",
@@ -127,8 +133,7 @@ var GoogleOauthCredentials bson.M
 var GoogleClientID string
 var GoogleSecret string
 
-var YoutubeOauthToken string
-var YoutubeRefreshToken string
+var YoutubeCredentials []YoutubeCredential
 
 var EightBallEnabled bool
 
@@ -162,8 +167,7 @@ type BotConfig struct {
 	GoogleOauthCredentials bson.M                `json:"-" bson:"google_oauth_credentials"`
 	GoogleClientID         string                `json:"-" bson:"google_client_id"`
 	GoogleSecret           string                `json:"-" bson:"google_secret"`
-	YoutubeOauthToken      string                `json:"-" bson:"youtube_oauth_token"`
-	YoutubeRefreshToken    string                `json:"-" bson:"youtube_refresh_token"`
+	YoutubeCredentials     []YoutubeCredential   `json:"-" bson:"youtube_credentials"`
 	EightBallEnabled       bool                  `json:"eight_ball_enabled" bson:"eight_ball_enabled"`
 	TweetSyncChannels      []TweetSyncConfig     `json:"tweet_sync_channels" bson:"tweet_sync_channels"`
 	CopyPipelines          []CopyPipeline        `json:"copy_pipelines" bson:"copy_pipelines"`
@@ -210,8 +214,7 @@ func LoadConfig() error {
 	GoogleOauthCredentials = config.GoogleOauthCredentials
 	GoogleClientID = config.GoogleClientID
 	GoogleSecret = config.GoogleSecret
-	YoutubeOauthToken = config.YoutubeOauthToken
-	YoutubeRefreshToken = config.YoutubeRefreshToken
+	YoutubeCredentials = config.YoutubeCredentials
 	EightBallEnabled = config.EightBallEnabled
 	TweetSyncChannels = config.TweetSyncChannels
 	CopyPipelines = config.CopyPipelines
